@@ -17,7 +17,8 @@ import {
   AlertCircle,
   X,
   Sliders,
-  Sparkle
+  Sparkle,
+  Instagram
 } from "lucide-react";
 import { SAMPLE_IMAGES, PRESET_RATIOS, PRESET_STYLES, PRESET_DETAILS, PRESET_ASPECT_EXTRACT } from "./data";
 import { ImageAnalysisResponse } from "./types";
@@ -685,7 +686,7 @@ export default function App() {
       <footer className="bg-white border-t border-fog py-5 px-4 text-center text-xs text-graphite shrink-0 mt-auto">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="flex items-center gap-1">
-            Membangun masa depan seni dengan <Heart className="h-3 w-3 text-rose-500 fill-rose-500" /> &bull; NanoPrompt Pro
+            Terus Belajar &bull; NanoPrompt Pro &bull; <a href="https://instagram.com/snnn_0110001" target="_blank" rel="noopener noreferrer" className="hover:text-iris font-semibold transition-colors flex items-center gap-1"><Instagram className="h-3 w-3" /> Instagram Saya</a>
           </p>
           <p className="text-[10px] font-mono text-graphite/80">
             Powered by Gemini Multi-Response Architecture &bull; API Shield Active
