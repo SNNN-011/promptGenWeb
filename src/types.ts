@@ -2,7 +2,7 @@ export interface ImageAnalysisRequest {
   image: string; // base64 encoded string
   mimeType: string; // e.g. "image/jpeg", "image/png"
   preferences?: {
-    generator: 'all' | 'midjourney' | 'dalle' | 'sd';
+    generator: string;
     aspectRatio: string;
     artisticStyle: string;
     detailLevel: 'compact' | 'balanced' | 'highly-detailed';

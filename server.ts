@@ -87,31 +87,42 @@ The user has specified the following customization preferences for the prompt ge
 
     let aspectFocusText = "";
     const aspectToExtract = preferences?.aspectToExtract || ["semua"];
+    let promptUniversalConstraint = "";
+
     if (aspectToExtract.includes("semua") || aspectToExtract.length === 0) {
       aspectFocusText = `
 FOKUS ANALISIS UTAMA ANDA ADALAH: **Seluruh Pembentuk Gambar (General Comprehensive Analysis)**.
 - Lakukan pembedahan visual secara menyeluruh dan seimbang meliputi subjek, gaya seni, komposisi kamera, pencahayaan, dan gaya palet warna secara seimbang.`;
+      
+      promptUniversalConstraint = "Prompt Nano Banana wajib sangat khas, hiper-deskriptif, dan memasukkan sentuhan gaya estetis (gaya artistik terpilih), detail elemen pencahayaan yang sinematis, parameter kamera/lensa, warna dominan, serta mengoptimalkannya untuk Nano Banana engine.";
     } else {
       aspectFocusText = "FOKUS ANALISIS UTAMA ANDA ADALAH PADA ASPEK-ASPEK TERPILIH BERIKUT:\n";
+      const selectedAspectNames: string[] = [];
       if (aspectToExtract.includes("warna")) {
         aspectFocusText += `\n- **Color Grading & Skema Warna Gambar (Color Palette Focus)**: Analisis secara saksama setiap rona warna, tingkat temperatur warna (cool/warm tones), saturasi, kontras, serta gaya color-grading (misalnya: film-look matted, saturated cyberpunk neon, earthy pastel, moody dark, dual-tone split-toning). Formulasikan gaya warna ini secara ultra-detail pada prompt bahasa Inggris Anda.`;
+        selectedAspectNames.push("warna dominan/skema warna");
       }
       if (aspectToExtract.includes("subjek")) {
         aspectFocusText += `\n- **Subjek, Objek, Karakter, & Pose (Subject & Pose Focus)**: Analisis secara saksama letak objek utama, gerak-gerik karakter, pose tubuh, pakaian, raut wajah, serta interaksi antar subjek di dalam frame. Konstruksikan rupa karakter ini sedetail mungkin agar disalin presisi oleh AI generator.`;
+      selectedAspectNames.push("deskripsi subjek/objek/karakter dan pose");
       }
       if (aspectToExtract.includes("gaya")) {
         aspectFocusText += `\n- **Gaya Seni, Kualitas Estetika, & Medium Seni (Art Style & Medium Focus)**: Deskripsikan secara mendalam bagaimana karya seni ini diciptakan (apakah lukisan cat minyak impasto berserat kasar, ilustrasi vector halus, digital anime 90an, render 3D Octane mengkilap, dll) agar bisa dipicu meniru tekstur gaya cetak tersebut.`;
+      selectedAspectNames.push("gaya seni/medium seni")
       }
       if (aspectToExtract.includes("komposisi")) {
         aspectFocusText += `\n- **Lensa, Sudut Pandang, & Komposisi Kamera (Camera Lens & Composition Focus)**: Analisis pembingkaian foto (misal macro closeup, low-angle shot, rule of thirds, overhead top-down, panoramic, dsb). Tentukan depth of field yang sesuai serta parameter lensa profesional.`;
+      selectedAspectNames.push("komposisi/sudut pandang kamera/lensa");
       }
       if (aspectToExtract.includes("pencahayaan")) {
         aspectFocusText += `\n- **Pencahayaan & Atmosfer Suasana (Lighting & Moody Atmosphere Focus)**: Identifikasi arah datangnya sinar cahaya (rim lighting, volumetric rays, soft window diffusions, dramatic chiaroscuro shadow play, neon glow, golden hour) dan formulasikan suasana bayangan-pendaran tersebut.`;
+      selectedAspectNames.push("pencahayaan/atmosfer");
       }
+      promptUniversalConstraint = `PENTING: Karena user hanya memilih prioritas tertentu, maka teks prompt untuk kolom "promptUniversal" HANYA boleh berisi gabungan dari elemen-elemen prioritas berikut saja: [${selectedAspectNames.join(", ")}], dan tidak boleh memasukkan elemen di luar prioritas tersebut. Gabungkan hasil ekstraksi prioritas tersebut sealami mungkin.`;
     }
 
-    const promptText = `Anda adalah pakar teknik prompt (Prompt Engineering Expert) berkebangsaan Indonesia untuk generator seni AI (DALL-E 3, Midjourney v6, Stable Diffusion XL). 
-Tugas Anda adalah menganalisis gambar terlampir secara mendalam dan merekayasa balik (reverse-engineer) gambar tersebut menjadi prompt teks penghasil gambar yang sangat akurat sesuai keinginan user.
+    const promptText = `Anda adalah pakar teknik prompt (Prompt Engineering Expert) untuk generator seni AI eksklusif "Nano Banana". 
+Tugas Anda adalah menganalisis gambar terlampir secara mendalam  gambar tersebut menjadi prompt teks penghasil gambar yang sangat akurat yang dioptimalkan khusus untuk engine Nano Banana sesuai keinginan user.
 
 ${aspectFocusText}
 
@@ -125,11 +136,11 @@ Lakukan pembedahan aspek detail berikut secara menyeluruh (selalu isi semua kolo
 ${prefsText}
 
 Instruksi Output Prompt:
-- promptUniversal: Buat prompt gambar universal tunggal beresolusi tinggi dalam bahasa Inggris (English). Prompt ini wajib menggabungkan deskripsi subjek secara jelas, kata kunci gaya estetis (gaya artistik terpilih), detail elemen pencahayaan yang sinematis, parameter kamera/lensa, warna dominan, dan selipkan format rasio aspek '--ar ${preferences?.aspectRatio || "1:1"}' di bagian paling akhir prompt. Buat sedemikian rupa agar sangat kuat jika dijalankan oleh Midjourney, DALL-E 3, maupun Stable Diffusion.
+- promptUniversal: Buat prompt gambar Nano Banana beresolusi tinggi dalam bahasa Inggris (English). ${promptUniversalConstraint} Selipkan format rasio aspek '--ar ${preferences?.aspectRatio || "1:1"}' di bagian paling akhir prompt.
 
 Bahasa:
-- Tulis penjelasan subjek (subject), gaya seni (style), komposisi (composition), pencahayaan (lighting), warna (colors), dan saran tambahan (additionalTips) dalam Bahasa Indonesia yang formal, puitis, menginspirasi, dan penuh nilai seni tinggi.
-- Namun, kolom prompt hasil akhir (promptUniversal) WAJIB ditulis dalam Bahasa Inggris secara lengkap karena generator gambar AI memproses Bahasa Inggris dengan ketajaman paling unggul.`;
+- Tulis penjelasan subjek (subject), gaya seni (style), komposisi (composition), pencahayaan (lighting), warna (colors), dan saran tambahan (additionalTips) dalam Bahasa Indonesia yang formal.
+- Namun, kolom prompt hasil akhir (promptUniversal) WAJIB ditulis dalam Bahasa Inggris secara lengkap karena generator gambar AI Nano Banana memproses Bahasa Inggris dengan ketajaman paling unggul.`;
 
     const modelsToTry = [
       "gemini-3.1-flash-lite"

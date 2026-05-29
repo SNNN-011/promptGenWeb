@@ -10,10 +10,10 @@ export interface SampleImage {
 }
 
 export const PRESET_MODELS = [
-  { id: "all", label: "Semua Model AI", desc: "Dapatkan prompt DALL-E, Midjourney, dan Stable Diffusion sekaligus" },
-  { id: "midjourney", label: "Midjourney v6", desc: "Fokus pada struktur estetika, realisme sinematik, dan parameter spesifik" },
-  { id: "dalle", label: "DALL-E 3 (ChatGPT)", desc: "Fokus pada instruksi bahasa alami yang deskriptif dan kaya imajinasi" },
-  { id: "sd", label: "Stable Diffusion XL", desc: "Fokus pada tag teknis, material detail, dan penyaringan saringan negatif" }
+  { id: "nanobanana-core", label: "Nano Banana Core", desc: "Dapatkan prompt seimbang & netral khusus untuk Nano Banana engine" },
+  { id: "nanobanana-cinematic", label: "Nano Banana Cinematic", desc: "Fokus pada struktur estetika sinematik elegan ala Nano Banana" },
+  { id: "nanobanana-hyper", label: "Nano Banana HyperDetail", desc: "Fokus instruksi mikroskopik nan detail untuk Nano Banana XL" },
+  { id: "nanobanana-creative", label: "Nano Banana Creative", desc: "Fokus pada interpretasi imajinatif bebas ala Nano Banana" }
 ] as const;
 
 export const PRESET_RATIOS = [
@@ -64,7 +64,7 @@ export const SAMPLE_IMAGES: SampleImage[] = [
       lighting: "Pencahayaan ganda dramatis (dual-tone split lighting) yang memancarkan pendar oranye hangat bintang di satu sisi, dan pantulan biru neon dingin dari planet bumi di sisi lainnya.",
       colors: "Warna kontras tinggi antara kelamnya luar akasa dengan jingga kosmik yang membara dan biru elektrik bumi, menciptakan kontras visual pelengkap (complementary contrast) yang kuat.",
       promptUniversal: "A cinematic medium-shot photo of an astronaut in an intricate white spacesuit. The gold-tinted glass of their helmet visor clearly reflects Planet Earth and glowing orange stellar nebulae. Intense side lighting from cosmic stars with electric blue and rich orange glows. Epic deep space atmosphere, highly detailed textures, photorealistic masterpiece, widescreen aspect-ratio --ar 16:9",
-      additionalTips: "Gunakan pengubah warna oranye dan biru untuk memaksimalkan efek sci-fi futuristik. Pada Midjourney, pastikan menggunakan rasio lebar agar kemegahan luar angkasa lebih membentang epik."
+      additionalTips: "Gunakan pengubah warna oranye dan biru untuk memaksimalkan efek sci-fi futuristik. Pada Nano Banana, pastikan menggunakan rasio lebar agar kemegahan luar angkasa lebih membentang epik."
     }
   },
   {

@@ -27,7 +27,7 @@ export default function App() {
   const [mimeType, setMimeType] = useState<string>("image/jpeg");
   
   const [aspectToExtract, setAspectToExtract] = useState<('semua' | 'subjek' | 'gaya' | 'komposisi' | 'pencahayaan' | 'warna')[]>(["semua"]);
-  const [generator] = useState<'all' | 'midjourney' | 'dalle' | 'sd'>("all");
+  const [generator] = useState<string>("Nano Banana Engine");
   const [aspectRatio, setAspectRatio] = useState<string>("16:9");
   const [artisticStyle, setArtisticStyle] = useState<string>("original");
   const [detailLevel, setDetailLevel] = useState<'compact' | 'balanced' | 'highly-detailed'>("balanced");
@@ -374,7 +374,7 @@ export default function App() {
                 >
                   {PRESET_RATIOS.map((r) => (
                     <option key={r.id} value={r.id}>
-                      Midjourney --ar {r.id} ({r.label.split(' ')[1] || r.label})
+                      Nano Banana --ar {r.id} ({r.label.split(' ')[1] || r.label})
                     </option>
                   ))}
                 </select>
@@ -512,7 +512,7 @@ export default function App() {
                     <span className="text-[10px] font-mono font-bold text-lavender-chip uppercase tracking-widest flex items-center gap-1">
                       <Sparkle className="h-3 w-3 fill-lavender-chip" /> PROMPT CODE
                     </span>
-                    <span className="text-[9px] text-white/50 block">Optimized directly for NanoBanana</span>
+                    <span className="text-[9px] text-white/50 block">Optimized directly for Nano Banana</span>
                   </div>
 
                   <button
