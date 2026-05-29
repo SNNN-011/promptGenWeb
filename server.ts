@@ -100,7 +100,7 @@ FOKUS ANALISIS UTAMA ANDA ADALAH: **Seluruh Pembentuk Gambar (General Comprehens
       const selectedAspectNames: string[] = [];
       if (aspectToExtract.includes("warna")) {
         aspectFocusText += `\n- **Color Grading & Skema Warna Gambar (Color Palette Focus)**: Analisis secara saksama setiap rona warna, tingkat temperatur warna (cool/warm tones), saturasi, kontras, serta gaya color-grading (misalnya: film-look matted, saturated cyberpunk neon, earthy pastel, moody dark, dual-tone split-toning). Formulasikan gaya warna ini secara ultra-detail pada prompt bahasa Inggris Anda.`;
-        selectedAspectNames.push("warna dominan/skema warna");
+        selectedAspectNames.push("color grading/skema warna");
       }
       if (aspectToExtract.includes("subjek")) {
         aspectFocusText += `\n- **Subjek, Objek, Karakter, & Pose (Subject & Pose Focus)**: Analisis secara saksama letak objek utama, gerak-gerik karakter, pose tubuh, pakaian, raut wajah, serta interaksi antar subjek di dalam frame. Konstruksikan rupa karakter ini sedetail mungkin agar disalin presisi oleh AI generator.`;
