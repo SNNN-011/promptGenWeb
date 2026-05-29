@@ -173,7 +173,7 @@ Bahasa:
                   style: { type: Type.STRING, description: "Deskripsi rinci tentang gaya seni gambar dalam Bahasa Indonesia." },
                   composition: { type: Type.STRING, description: "Deskripsi rinci mengenai sudut pandang kamera, pembingkaian frame, dan kedalaman lensa dalam Bahasa Indonesia." },
                   lighting: { type: Type.STRING, description: "Deskripsi rinci tentang pencahayaan dan atmosfer emosional dalam Bahasa Indonesia." },
-                  colors: { type: Type.STRING, description: "Analisis tentang kombinasi warna dominan dan gradasi warna dalam Bahasa Indonesia." },
+                  colors: { type: Type.STRING, description: "Analisis tentang color grading dan gradasi warna dalam Bahasa Indonesia." },
                   promptUniversal: { type: Type.STRING, description: "Prompt gambar universal dalam Bahasa Inggris dengan rasio aspek di ujungnya." },
                   additionalTips: { type: Type.STRING, description: "Tips dan panduan pro dalam Bahasa Indonesia agar hasil gambar maksimal." },
                 },
