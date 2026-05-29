@@ -53,7 +53,7 @@ export const PRESET_ASPECT_EXTRACT = [
 export const SAMPLE_IMAGES: SampleImage[] = [
   {
     id: "galaxy-astronaut",
-    title: "Astronot & Refleksi Kosmik",
+    title: "Refleksi Kosmik",
     category: "Sci-Fi / Fotografi",
     imageUrl: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&q=80&w=600",
     originalStyle: "Fotorealistik Eksploratif luar angkasa dengan pencahayaan kosmik biru-oranye dramatis.",

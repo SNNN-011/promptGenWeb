@@ -201,7 +201,7 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-1.5 leading-none">
-                <span className="font-display font-semibold text-base tracking-tight text-ink">AuraPrompt</span>
+                <span className="font-display font-semibold text-base tracking-tight text-ink">NanoPrompt</span>
                 <span className="text-[9px] uppercase font-bold tracking-wider bg-ink text-white px-1 ml-0.5 rounded">PRO</span>
               </div>
               <p className="text-[9px] text-graphite uppercase tracking-wider font-mono mt-0.5">Membongkar Visual Menjadi Kata</p>
@@ -212,7 +212,7 @@ export default function App() {
             <div className="hidden md:flex items-center gap-3 text-xs text-graphite/80 font-mono border-r border-fog pr-4">
               <span>EST. PROCESSING: ~2s</span>
               <span>&bull;</span>
-              <span>MODEL: DALL-E &bull; MIDJOURNEY &bull; SD</span>
+              <span>MODEL: NANO BANANA</span>
             </div>
             <a 
               href="#workspace" 
@@ -243,7 +243,7 @@ export default function App() {
             Ubah Gambar Menjadi Deskripsi <span className="text-iris font-semibold underline decoration-wavy underline-offset-4 decoration-1">Prompt Artistik</span> Presisi Tinggi.
           </h2>
           <p className="text-xs sm:text-sm text-graphite max-w-lg mx-auto leading-relaxed">
-            Dapatkan formulasi prompt universal bahasa Inggris untuk Midjourney, DALL-E, & Stable Diffusion dari visualisasi foto apa pun dalam satu detik.
+            Dapatkan formulasi prompt universal bahasa Inggris untuk Nano Banana dari visualisasi foto apa pun dalam satu detik.
           </p>
         </div>
       </div>
@@ -337,7 +337,7 @@ export default function App() {
             {/* A. PRIORITAS EKSTRAKSI */}
             <div className="space-y-2.5">
               <label className="text-[11px] font-bold text-ink uppercase tracking-wider block">
-                Fokus Prioritas Ekstraksi (Multiselect)
+                Pilih yang akan dianalisis (Multiselect)
               </label>
               <div className="flex flex-wrap gap-2">
                 {PRESET_ASPECT_EXTRACT.map((a) => {
@@ -365,7 +365,7 @@ export default function App() {
               
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-ink uppercase tracking-wider block">
-                  Proporsi Aspek Rasio
+                  Aspek Rasio
                 </label>
                 <select
                   value={aspectRatio}
@@ -459,7 +459,7 @@ export default function App() {
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  <span>PREDIKSI PROMPT SEKARANG</span>
+                  <span>BUAT PROMPT SEKARANG</span>
                 </>
               )}
             </button>
@@ -510,9 +510,9 @@ export default function App() {
                 <div className="bg-neutral-900 px-4 py-3 border-b border-white/5 flex items-center justify-between">
                   <div className="space-y-0.5">
                     <span className="text-[10px] font-mono font-bold text-lavender-chip uppercase tracking-widest flex items-center gap-1">
-                      <Sparkle className="h-3 w-3 fill-lavender-chip" /> UNIVERSAL PROMPT CODE
+                      <Sparkle className="h-3 w-3 fill-lavender-chip" /> PROMPT CODE
                     </span>
-                    <span className="text-[9px] text-white/50 block">Optimized directly for DALL-E, SD, & Midjourney</span>
+                    <span className="text-[9px] text-white/50 block">Optimized directly for NanoBanana</span>
                   </div>
 
                   <button
@@ -537,13 +537,6 @@ export default function App() {
                   <div className="p-3.5 bg-neutral-950/60 border border-white/10 rounded-xl font-mono text-xs text-white/95 leading-relaxed break-words select-all whitespace-pre-wrap">
                     {analysisResult.promptUniversal}
                   </div>
-                  
-                  {analysisResult.additionalTips && (
-                    <div className="text-[11px] text-white/80 border-t border-white/10 pt-3 flex items-start gap-1.5 leading-relaxed">
-                      <span className="font-bold text-lavender-chip shrink-0">PRO TIP:</span>
-                      <span>{analysisResult.additionalTips}</span>
-                    </div>
-                  )}
                 </div>
 
               </div>
@@ -692,7 +685,7 @@ export default function App() {
       <footer className="bg-white border-t border-fog py-5 px-4 text-center text-xs text-graphite shrink-0 mt-auto">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="flex items-center gap-1">
-            Membangun masa depan seni dengan <Heart className="h-3 w-3 text-rose-500 fill-rose-500" /> &bull; AuraPrompt Pro
+            Membangun masa depan seni dengan <Heart className="h-3 w-3 text-rose-500 fill-rose-500" /> &bull; NanoPrompt Pro
           </p>
           <p className="text-[10px] font-mono text-graphite/80">
             Powered by Gemini Multi-Response Architecture &bull; API Shield Active
