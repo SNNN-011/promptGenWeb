@@ -184,7 +184,7 @@ export default function App() {
           <span className="inline-flex bg-white/10 text-white font-mono text-[9px] uppercase px-1.5 py-0.5 rounded tracking-widest">
             ACTIVE SYSTEM
           </span>
-          <span className="opacity-90 font-mono tracking-tight">Gemini 3.1 Flash Lite Online Failover Engine</span>
+          <span className="opacity-90 font-mono tracking-tight">Gemini 3.x Online Failover Engine</span>
         </div>
         <div className="hidden sm:flex items-center gap-4 text-white/70">
           <span>Shield Safe Environment</span>
@@ -213,7 +213,7 @@ export default function App() {
             <div className="hidden md:flex items-center gap-3 text-xs text-graphite/80 font-mono border-r border-fog pr-4">
               <span>EST. PROCESSING: ~2s</span>
               <span>&bull;</span>
-              <span>MODEL: NANO BANANA</span>
+              <span>MODEL: ADVANCED GEMINI MODEL</span>
             </div>
             <a 
               href="#workspace" 
@@ -686,7 +686,7 @@ export default function App() {
       <footer className="bg-white border-t border-fog py-5 px-4 text-center text-xs text-graphite shrink-0 mt-auto">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="flex items-center gap-1">
-            Terus Belajar &bull; NanoPrompt Pro &bull; <a href="https://instagram.com/snnn_0110001" target="_blank" rel="noopener noreferrer" className="hover:text-iris font-semibold transition-colors flex items-center gap-1"><Instagram className="h-3 w-3" /> Instagram Saya</a>
+            Terus Belajar &bull; NanoPrompt Pro &bull; <a href="https://instagram.com/snnn_0110001" target="_blank" rel="noopener noreferrer" className="hover:text-iris font-semibold transition-colors flex items-center gap-1"><Instagram className="h-3 w-3" />Instagram</a>
           </p>
           <p className="text-[10px] font-mono text-graphite/80">
             Powered by Gemini Multi-Response Architecture &bull; API Shield Active
