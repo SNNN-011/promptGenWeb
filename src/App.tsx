@@ -525,7 +525,7 @@ export default function App() {
                     <div className="flex items-center gap-2.5">
                       <Settings className="h-4 w-4 text-[#5B4FD8]" />
                       <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
-                        4. Catatan Atmosfer Tambahan
+                        4. Catatan Tambahan
                       </span>
                     </div>
                     {openParams.custom ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
