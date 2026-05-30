@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   Camera, 
   Sparkles, 
@@ -18,7 +19,12 @@ import {
   X,
   Sliders,
   Sparkle,
-  Instagram
+  Instagram,
+  ChevronDown,
+  ChevronUp,
+  Settings,
+  Image,
+  ArrowRight
 } from "lucide-react";
 import { SAMPLE_IMAGES, PRESET_RATIOS, PRESET_STYLES, PRESET_DETAILS, PRESET_ASPECT_EXTRACT } from "./data";
 import { ImageAnalysisResponse } from "./types";
@@ -60,6 +66,31 @@ export default function App() {
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Accordion open/close states for parameters panel
+  const [openParams, setOpenParams] = useState<Record<string, boolean>>({
+    extraction: true,
+    format: true,
+    style: false,
+    custom: false
+  });
+
+  const toggleParamSection = (section: string) => {
+    setOpenParams(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  // Stacked accordion states for Indonesian Visual Breakdown result
+  const [openBreakdown, setOpenBreakdown] = useState<Record<string, boolean>>({
+    subject: true,
+    style: false,
+    colors: false,
+    composition: false,
+    lighting: false
+  });
+
+  const toggleBreakdownSec = (key: string) => {
+    setOpenBreakdown(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const progressSteps = [
     "Menghubungkan Gemini Engine...",
@@ -119,6 +150,9 @@ export default function App() {
     setAnalysisResult(sample.precalculatedResponse);
     setArtisticStyle("original");
     setError(null);
+    
+    // Auto scroll down to workspace smoothly
+    document.getElementById("workspace")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleAnalyzeImage = async () => {
@@ -159,6 +193,15 @@ export default function App() {
       }
 
       setAnalysisResult(result.data);
+      
+      // Auto expand relevant breakdown tabs
+      setOpenBreakdown({
+        subject: true,
+        style: true,
+        colors: true,
+        composition: true,
+        lighting: true
+      });
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Gagal memproses gambar. Pastikan API key Anda aktif.");
@@ -176,521 +219,646 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-parchment-canvas text-ink flex flex-col relative tracking-tight selection:bg-lavender-chip selection:text-ink">
+    <div className="min-h-screen bg-white text-[#111111] font-sans selection:bg-[#5B4FD8]/10 selection:text-[#5B4FD8]">
       
-      {/* 1. TOP ANNOUNCEMENT BAR (Superhuman Bracket Frame) */}
-      <div id="announcement-frame" className="w-full bg-aubergine text-white text-[11px] font-medium py-2 px-4 flex items-center justify-between border-b border-aubergine-deep shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex bg-white/10 text-white font-mono text-[9px] uppercase px-1.5 py-0.5 rounded tracking-widest">
-            ACTIVE SYSTEM
-          </span>
-          <span className="opacity-90 font-mono tracking-tight">Gemini 3.x Online Failover Engine</span>
-        </div>
-        <div className="hidden sm:flex items-center gap-4 text-white/70">
-          <span>Shield Safe Environment</span>
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        </div>
-      </div>
-
-      {/* 2. STICKY SYSTEM NAVIGATION */}
-      <header className="bg-white/95 backdrop-blur-md border-b border-fog sticky top-0 z-40 px-4 py-3 shrink-0">
-        <div className="max-w-[1200px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-ink flex items-center justify-center text-white relative shadow-sm">
-              <Camera className="h-4 w-4" />
-              <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-iris"></span>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 leading-none">
-                <span className="font-display font-semibold text-base tracking-tight text-ink">NanoPrompt</span>
-                <span className="text-[9px] uppercase font-bold tracking-wider bg-ink text-white px-1 ml-0.5 rounded">PRO</span>
-              </div>
-              <p className="text-[9px] text-graphite uppercase tracking-wider font-mono mt-0.5">Membongkar Visual Menjadi Kata</p>
+      {/* NAVIGATION BAR - Sticky, translucent, minimal */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-neutral-100 px-6 py-4">
+        <div className="max-w-[1120px] mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="font-sans font-medium text-base tracking-tight text-[#111111]">NanoPrompt</span>
+            <span className="text-[9px] font-bold tracking-wider bg-[#111111] text-white px-1.5 py-0.5 rounded-full">PRO</span>
+            <div className="hidden sm:flex items-center gap-1.5 ml-4 text-[10px] text-[#6B6B6B] font-mono uppercase tracking-wider">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Gemini 3.x Failover Engine Active</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-3 text-xs text-graphite/80 font-mono border-r border-fog pr-4">
-              <span>EST. PROCESSING: ~2s</span>
-              <span>&bull;</span>
-              <span>MODEL: ADVANCED GEMINI MODEL</span>
+          <div className="flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-6 text-sm text-[#6B6B6B]">
+              <a href="#workspace" className="hover:text-[#111111] transition-colors">Workspace</a>
+              <a href="#gallery" className="hover:text-[#111111] transition-colors">Galeri Instan</a>
             </div>
             <a 
-              href="#workspace" 
-              className="px-3.5 py-1.5 text-xs font-semibold text-iris border border-iris hover:bg-iris/5 transition-all rounded-lg flex items-center gap-1"
+              href="#workspace"
+              onClick={() => {
+                setSelectedImage(SAMPLE_IMAGES[0].imageUrl);
+                setAnalysisResult(SAMPLE_IMAGES[0].precalculatedResponse);
+                setAspectToExtract(["semua"]);
+                setArtisticStyle("original");
+                setAspectRatio("16:9");
+                setDetailLevel("balanced");
+                setCustomInstructions("");
+              }}
+              className="text-xs font-medium text-[#111111] hover:text-[#5B4FD8] transition-colors border border-[#EBEBEB] hover:border-[#CCCCCC] px-3.5 py-1.5 rounded-full"
             >
-              <Sparkles className="h-3 w-3" />
               Reset Cabin
             </a>
           </div>
         </div>
+      </nav>
+
+      {/* HERO SECTION - Minimal, large, left-aligned, breathing room */}
+      <header className="relative py-[90px] px-6 overflow-hidden">
+        {/* Subtle, beautiful soft background radial aura */}
+        <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-tr from-[#5B4FD8]/5 to-transparent filter blur-3xl pointer-events-none rounded-full"></div>
+        
+        <div className="max-w-[1120px] mx-auto relative z-10">
+          <p className="text-[11px] font-medium tracking-widest text-[#5B4FD8] uppercase mb-4">
+            AI-POWERED IMAGE TO ARTISTIC PROMPT CONVERTER
+          </p>
+          <h1 className="text-4xl sm:text-6xl lg:text-[76px] font-light text-[#111111] leading-[1.1] tracking-tight max-w-4xl mb-6">
+            Ubah Gambar Menjadi Deskripsi Prompt Artistik.
+          </h1>
+          <p className="text-base sm:text-lg text-[#6B6B6B] leading-relaxed max-w-2xl mb-8">
+            Dapatkan deskripsi visual presisi tingkat tinggi serta formulasi prompt universal bahasa Inggris untuk Nano Banana langsung dari visualisasi foto apa pun dalam satu detik.
+          </p>
+          
+          <div className="flex flex-wrap items-center gap-4">
+            <a
+              href="#workspace"
+              className="inline-flex items-center gap-2 bg-[#5B4FD8] hover:bg-[#4A3EBE] text-white text-sm font-medium px-6 py-3 rounded-full shadow-xs hover:opacity-90 active:scale-[0.98] transition-all"
+            >
+              <span>Mulai Bedah Gambar</span>
+              <ArrowRight className="h-4 w-4" />
+            </a>
+            <span className="text-xs font-mono text-[#6B6B6B] flex items-center gap-1.5 ml-1">
+              <span>EST. PROCESSING: ~2s</span>
+              <span>&bull;</span>
+              <span>POWERED BY GEMINI</span>
+            </span>
+          </div>
+        </div>
       </header>
 
-      {/* 3. HERO GLASS CONTAINER (Atmospheric Spotlights Behind) */}
-      <div className="relative overflow-hidden border-b border-fog bg-white py-12 px-4 shadow-[inset_0_-2px_10px_rgba(41,40,39,0.02)]">
-        
-        {/* Subtle radial gradients behind page top */}
-        <div className="absolute inset-0 pointer-events-none z-0 opacity-15 overflow-hidden">
-          <div className="absolute top-[-50px] left-[15%] w-[400px] h-[400px] rounded-full filter blur-[80px]" style={{ background: "radial-gradient(circle, rgba(113,76,182,0.6) 0%, rgba(0,0,0,0) 70%)" }}></div>
-          <div className="absolute top-10 right-[15%] w-[350px] h-[350px] rounded-full filter blur-[70px]" style={{ background: "radial-gradient(circle, rgba(255,51,102,0.4) 0%, rgba(0,0,0,0) 70%)" }}></div>
-        </div>
-
-        <div className="max-w-[850px] mx-auto text-center relative z-10 space-y-4">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-parchment-canvas border border-driftwood rounded-full text-[10px] font-mono text-ink">
-            <span className="h-1.5 w-1.5 rounded-full bg-iris"></span>
-            <span>PREMIUM INTERACTIVE CABIN</span>
-          </div>
-          <h2 className="font-display font-bold text-ink text-3xl sm:text-4xl tracking-tight leading-tight max-w-2xl mx-auto">
-            Ubah Gambar Menjadi Deskripsi <span className="text-iris font-semibold underline decoration-wavy underline-offset-4 decoration-1">Prompt Artistik</span> Presisi Tinggi.
-          </h2>
-          <p className="text-xs sm:text-sm text-graphite max-w-lg mx-auto leading-relaxed">
-            Dapatkan formulasi prompt universal bahasa Inggris untuk Nano Banana dari visualisasi foto apa pun dalam satu detik.
-          </p>
-        </div>
-      </div>
-
-      {/* 4. MAIN ENGINE CABIN */}
-      <main id="workspace" className="flex-grow max-w-[1200px] w-full mx-auto p-4 sm:p-6 lg:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
-        
-        {/* ================= LEFT WING: PHOTO INPUTS & PREFERENCES ================= */}
-        <div className="lg:col-span-6 space-y-6">
+      {/* OFF-WHITE SECTION BOUNDARY FOR WORKSPACE */}
+      <section className="bg-[#F7F7F5] border-t border-neutral-100/60 py-[100px] px-6">
+        <main id="workspace" className="max-w-[1120px] mx-auto">
           
-          {/* PHOTO CABINET */}
-          <div className="bg-white rounded-[24px] p-6 space-y-4 shadow-[0_4px_24px_rgba(41,40,39,0.02)] relative overflow-hidden">
-            
-            <div className="flex items-center justify-between pb-1">
-              <span className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-iris"></span>
-                Visual Source Scanner
-              </span>
-              {selectedImage && (
-                <button 
-                  onClick={() => {
-                    setSelectedImage(null);
-                    setAnalysisResult(null);
-                    setError(null);
-                  }}
-                  className="text-rose-600 hover:text-rose-800 flex items-center gap-1 tracking-tight text-[11px] font-semibold transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" /> Bersihkan Bidang
-                </button>
-              )}
-            </div>
-
-            {/* DRAG AND DROP AREA */}
-            <div 
-              onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-              onDragLeave={() => setIsDragOver(false)}
-              onDrop={(e) => { e.preventDefault(); setIsDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) processSelectedFile(f); }}
-              onClick={() => fileInputRef.current?.click()}
-              className={`border border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[160px] relative ${
-                isDragOver ? "border-iris bg-lavender-chip/20" : "border-fog/80 bg-parchment-canvas/40 hover:bg-parchment-canvas/60"
-              }`}
-            >
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-
-              {selectedImage ? (
-                <div className="relative group max-h-[180px] rounded-xl overflow-hidden bg-white p-1.5 shadow-xs">
-                  <img 
-                    src={selectedImage} 
-                    alt="Visualization target" 
-                    className="max-h-[150px] object-contain mx-auto rounded-lg" 
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-ink/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-mono font-bold">
-                    Ganti Gambar
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2 py-3 flex flex-col items-center">
-                  <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center text-graphite shadow-[0_2px_8px_rgba(0,0,0,0.015)]">
-                    <Upload className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-semibold text-ink">Seret & lepas berkas ke sini</p>
-                    <p className="text-[10px] text-graphite">Atau <span className="text-iris font-semibold underline">cari dari komputer</span> (Max 10MB)</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {error && (
-              <div className="p-3 bg-rose-50 border border-rose-100 rounded-lg text-xs text-rose-800 flex items-start gap-2 animate-fadeIn">
-                <AlertCircle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
-            )}
+          {/* Subtitle above workspace grid */}
+          <div className="mb-10 text-left">
+            <p className="text-[11px] font-bold tracking-wider text-[#6B6B6B] uppercase mb-1">INTERACTIVE DESK</p>
+            <h2 className="text-2xl font-normal text-[#111111] tracking-tight">Main Workbench Cabin</h2>
           </div>
 
-          {/* PARAMETERS CONTROL SWITCHBOARD */}
-          <div className="bg-white rounded-[24px] p-6 space-y-6 shadow-[0_4px_24px_rgba(41,40,39,0.02)]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
             
-            <div className="pb-1 flex items-center justify-between">
-              <span className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
-                <Sliders className="h-4 w-4 text-iris" />
-                Parameter Bedahan Visual
-              </span>
-              <span className="text-[9px] font-mono font-bold bg-parchment-canvas/80 text-graphite/80 px-2 py-0.5 rounded uppercase tracking-wider">
-                TWEAK CORE
-              </span>
-            </div>
-
-            {/* A. PRIORITAS EKSTRAKSI */}
-            <div className="space-y-2.5">
-              <label className="text-[11px] font-bold text-ink uppercase tracking-wider block">
-                Pilih yang akan dianalisis (Multiselect)
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {PRESET_ASPECT_EXTRACT.map((a) => {
-                  const isSelected = aspectToExtract.includes(a.id as any);
-                  return (
-                    <button
-                      key={a.id}
-                      type="button"
-                      onClick={() => handleToggleAspect(a.id as any)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold select-none transition-all cursor-pointer ${
-                        isSelected 
-                          ? "bg-iris text-white shadow-[0_4px_12px_rgba(113,76,182,0.15)]" 
-                          : "bg-parchment-canvas/60 text-ink/80 hover:bg-parchment-canvas hover:text-ink"
-                      }`}
-                    >
-                      {a.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* B. DIMENSI RATIO & DETAIL COMPILER */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* LEFT COLUMN: Input and Parameters */}
+            <div className="space-y-8">
               
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-ink uppercase tracking-wider block">
-                  Aspek Rasio
-                </label>
-                <select
-                  value={aspectRatio}
-                  onChange={(e) => setAspectRatio(e.target.value)}
-                  className="w-full bg-parchment-canvas/40 border border-fog/50 hover:border-driftwood rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-iris cursor-pointer transition-all"
-                >
-                  {PRESET_RATIOS.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      Nano Banana --ar {r.id} ({r.label.split(' ')[1] || r.label})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-ink uppercase tracking-wider block">
-                  Presisi Variasi Detalisis
-                </label>
-                <select
-                  value={detailLevel}
-                  onChange={(e) => setDetailLevel(e.target.value as any)}
-                  className="w-full bg-parchment-canvas/40 border border-fog/50 hover:border-driftwood rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-iris cursor-pointer transition-all"
-                >
-                  {PRESET_DETAILS.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-            </div>
-
-            {/* C. ART STYLE TRANSFORMERS */}
-            <div className="space-y-2.5">
-              <label className="text-[11px] font-bold text-ink uppercase tracking-wider block">
-                Transformasi Gaya Artistik (Opsional)
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-parchment-canvas/30 p-1.5 rounded-2xl">
-                {PRESET_STYLES.map((style) => {
-                  const isStyleSelected = artisticStyle === style.id;
-                  return (
-                    <button
-                      key={style.id}
-                      type="button"
-                      onClick={() => setArtisticStyle(style.id)}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer text-center ${
-                        isStyleSelected
-                          ? "bg-white text-ink shadow-[0_4px_12px_rgba(41,40,39,0.04)]"
-                          : "hover:bg-white/40 text-ink/75"
-                      }`}
+              {/* IMAGE UPLOADER CARD */}
+              <div className="bg-white border border-[#EBEBEB] rounded-2xl p-6 transition-all hover:border-[#CCCCCC]">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-[#6B6B6B] block">
+                    Source Visual File
+                  </span>
+                  {selectedImage && (
+                    <button 
+                      onClick={() => {
+                        setSelectedImage(null);
+                        setAnalysisResult(null);
+                        setError(null);
+                      }}
+                      className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors flex items-center gap-1"
                     >
-                      {style.label}
+                      <X className="h-3.5 w-3.5" /> Bersihkan
                     </button>
-                  );
-                })}
-              </div>
-            </div>
+                  )}
+                </div>
 
-            {/* D. CUSTOM COMMANDER */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-ink uppercase tracking-wider block">
-                Interupsi Atmosfer / Custom Note
-              </label>
-              <input
-                type="text"
-                value={customInstructions}
-                onChange={(e) => setCustomInstructions(e.target.value)}
-                placeholder="Ex. 'buat bertema senja retro, ganti latar belakang menjadi kastil bergaya gothic...'"
-                className="w-full bg-parchment-canvas/40 border border-fog/50 rounded-xl px-3 py-2 text-xs text-ink placeholder:text-graphite/55 focus:outline-none focus:border-iris"
-              />
-            </div>
-
-            {/* SUBMIT BUTTON */}
-            <button
-              onClick={handleAnalyzeImage}
-              disabled={loading || !selectedImage}
-              className={`w-full py-3.5 rounded-xl text-white font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                loading 
-                  ? "bg-graphite cursor-wait" 
-                  : !selectedImage 
-                    ? "bg-fog text-graphite cursor-not-allowed" 
-                    : "bg-aubergine hover:bg-aubergine-deep hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer"
-              }`}
-            >
-              {loading ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>MENGURAI PIKSEL SENI...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  <span>BUAT PROMPT SEKARANG</span>
-                </>
-              )}
-            </button>
-
-          </div>
-
-        </div>
-
-        {/* ================= RIGHT WING: DECONSTRUCT BREAKDOWN ================= */}
-        <div className="lg:col-span-6 space-y-6">
-          
-          {/* LOADER PANELS */}
-          {loading && (
-            <div className="bg-white rounded-[24px] p-8 text-center space-y-5 min-h-[460px] flex flex-col justify-center items-center relative overflow-hidden shadow-[0_4px_24px_rgba(41,40,39,0.02)]">
-              <div className="absolute top-0 left-0 w-full h-1 bg-fog">
+                {/* DRAG-AND-DROP CONTAINER */}
                 <div 
-                  className="bg-iris h-full transition-all duration-300 rounded" 
-                  style={{ width: `${((loadingStep + 1) / progressSteps.length) * 100}%` }}
-                />
-              </div>
-              
-              <div className="h-14 w-14 rounded-full bg-parchment-canvas flex items-center justify-center text-iris shadow-2xs animate-pulse">
-                <RefreshCw className="h-6 w-6 animate-spin" />
-              </div>
+                  onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                  onDragLeave={() => setIsDragOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setIsDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) processSelectedFile(f); }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[180px] bg-[#F7F7F5] ${
+                    isDragOver ? "border-[#5B4FD8] bg-[#5B4FD8]/5" : "border-neutral-200 hover:bg-neutral-100/40"
+                  }`}
+                >
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
 
-              <div className="space-y-1.5">
-                <h4 className="font-display font-semibold text-ink text-base uppercase tracking-wider">
-                  Menganalisis Karya Seni
-                </h4>
-                <p className="text-xs text-graphite max-w-[280px] mx-auto leading-relaxed">
-                  Engine Gemini sedang memindai esensi terdalam visual ke dalam parameter generatif.
-                </p>
-              </div>
+                  {selectedImage ? (
+                    <div className="relative group max-h-[220px] rounded-lg overflow-hidden bg-white p-2">
+                      <img 
+                        src={selectedImage} 
+                        alt="Target visualizer" 
+                        className="max-h-[180px] object-contain mx-auto rounded-md" 
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-[#111111]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
+                        Ganti Gambar
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 py-4 flex flex-col items-center">
+                      <div className="h-10 w-10 rounded-full bg-white border border-neutral-100 flex items-center justify-center text-[#6B6B6B]">
+                        <Upload className="h-4 w-4" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-[#111111]">Seret & lepaskan berkas gambar ke sini</p>
+                        <p className="text-[11px] text-[#6B6B6B]">atau klik untuk menautkan berkas dari komputer (Maksimal 10MB)</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-              <span className="text-xs font-mono font-bold text-iris bg-lavender-chip/40 px-3 py-1 rounded-full border border-iris/15 tracking-tight animate-bounce">
-                {progressSteps[loadingStep]}
-              </span>
-            </div>
-          )}
-
-          {/* GENERATED PROMPT OUTPUT */}
-          {!loading && analysisResult && (
-            <div className="space-y-6 animate-fadeIn">
-              
-              {/* COCKPIT RESULT CARRIER (Dark Themed For Premium Contrast Contrast) */}
-              <div className="bg-ink text-white rounded-[24px] shadow-lg overflow-hidden relative">
-                
-                <div className="bg-neutral-900 px-4 py-3 border-b border-white/5 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-mono font-bold text-lavender-chip uppercase tracking-widest flex items-center gap-1">
-                      <Sparkle className="h-3 w-3 fill-lavender-chip" /> PROMPT CODE
-                    </span>
-                    <span className="text-[9px] text-white/50 block">Optimized directly for Nano Banana</span>
+                {error && (
+                  <div className="mt-4 p-3 bg-rose-50 border border-rose-100 rounded-lg text-xs text-rose-700 flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>{error}</span>
                   </div>
+                )}
+              </div>
 
-                  <button
-                    onClick={() => handleCopy(analysisResult.promptUniversal, 'universal')}
-                    className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-all flex items-center gap-1 cursor-pointer"
+              {/* PARAMETER CONFIGURATION - Clean Collapsible Accordion Groups */}
+              <div className="space-y-4">
+                
+                {/* 1. EXTRACT PRIORITIES ACCORDION */}
+                <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
+                  <button 
+                    type="button"
+                    onClick={() => toggleParamSection('extraction')}
+                    className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
                   >
-                    {copiedStates['universal'] ? (
-                      <>
-                        <Check className="h-3.5 w-3.5 text-emerald-400" />
-                        <span className="text-emerald-400 font-bold">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-3.5 w-3.5" />
-                        <span>Copy Prompt</span>
-                      </>
-                    )}
+                    <div className="flex items-center gap-2.5">
+                      <Sliders className="h-4 w-4 text-[#5B4FD8]" />
+                      <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
+                        1. Pilih yang Akan Dianalisis
+                      </span>
+                    </div>
+                    {openParams.extraction ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
                   </button>
+
+                  {openParams.extraction && (
+                    <div className="px-6 pb-6 border-t border-neutral-50 pt-4 space-y-3">
+                      <p className="text-xs text-[#6B6B6B] mb-2 leading-relaxed">
+                        Centang komponen visual yang ingin Anda prioritaskan untuk diekstrak menjadi penegas prompt.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {PRESET_ASPECT_EXTRACT.map((a) => {
+                          const isSelected = aspectToExtract.includes(a.id as any);
+                          return (
+                            <button
+                              key={a.id}
+                              type="button"
+                              onClick={() => handleToggleAspect(a.id as any)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                                isSelected 
+                                  ? "bg-[#5B4FD8] text-white" 
+                                  : "bg-[#F0F0F0] text-[#111111]/80 hover:bg-[#EAEAEA]"
+                              }`}
+                            >
+                              {a.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="p-4 space-y-3.5">
-                  <div className="p-3.5 bg-neutral-950/60 border border-white/10 rounded-xl font-mono text-xs text-white/95 leading-relaxed break-words select-all whitespace-pre-wrap">
-                    {analysisResult.promptUniversal}
-                  </div>
+                {/* 2. FORMAT & RATIO ACCORDION */}
+                <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
+                  <button 
+                    type="button"
+                    onClick={() => toggleParamSection('format')}
+                    className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Monitor className="h-4 w-4 text-[#5B4FD8]" />
+                      <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
+                        2. Format Aspek Rasio & Detalitas
+                      </span>
+                    </div>
+                    {openParams.format ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
+                  </button>
+
+                  {openParams.format && (
+                    <div className="px-6 pb-6 border-t border-neutral-50 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase tracking-widest text-[#6B6B6B] block">
+                          Aspek Rasio Gambar
+                        </label>
+                        <select
+                          value={aspectRatio}
+                          onChange={(e) => setAspectRatio(e.target.value)}
+                          className="w-full bg-[#F7F7F5] border-none rounded-lg px-3 py-2 text-xs text-[#111111] focus:ring-1 focus:ring-[#5B4FD8] cursor-pointer"
+                        >
+                          {PRESET_RATIOS.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              Nano Banana --ar {r.id}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase tracking-widest text-[#6B6B6B] block">
+                          Tingkat Presisi Variasi
+                        </label>
+                        <select
+                          value={detailLevel}
+                          onChange={(e) => setDetailLevel(e.target.value as any)}
+                          className="w-full bg-[#F7F7F5] border-none rounded-lg px-3 py-2 text-xs text-[#111111] focus:ring-1 focus:ring-[#5B4FD8] cursor-pointer"
+                        >
+                          {PRESET_DETAILS.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. ART STYLE INTERPRETATIONS */}
+                <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
+                  <button 
+                    type="button"
+                    onClick={() => toggleParamSection('style')}
+                    className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Palette className="h-4 w-4 text-[#5B4FD8]" />
+                      <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
+                        3. Transformasi Gaya Seni (Satu Pilihan)
+                      </span>
+                    </div>
+                    {openParams.style ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
+                  </button>
+
+                  {openParams.style && (
+                    <div className="px-6 pb-6 border-t border-neutral-50 pt-4 space-y-3">
+                      <p className="text-xs text-[#6B6B6B]">
+                        Alas gaya seni baru di atas parameter gambar asli Anda. Generator akan menggabungkan tekstur ini.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {PRESET_STYLES.map((style) => {
+                          const isActive = artisticStyle === style.id;
+                          return (
+                            <button
+                              key={style.id}
+                              type="button"
+                              onClick={() => setArtisticStyle(style.id)}
+                              className={`px-3 py-2 rounded-lg text-xs font-medium text-left transition-colors cursor-pointer ${
+                                isActive 
+                                  ? "bg-[#5B4FD8] text-white" 
+                                  : "bg-[#F7F7F5] text-[#111111]/80 hover:bg-[#EBEBEB]"
+                              }`}
+                            >
+                              {style.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. CUSTOM NOTES ACCORDION */}
+                <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
+                  <button 
+                    type="button"
+                    onClick={() => toggleParamSection('custom')}
+                    className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Settings className="h-4 w-4 text-[#5B4FD8]" />
+                      <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
+                        4. Catatan Atmosfer Tambahan
+                      </span>
+                    </div>
+                    {openParams.custom ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
+                  </button>
+
+                  {openParams.custom && (
+                    <div className="px-6 pb-6 border-t border-neutral-50 pt-4 space-y-1.5">
+                      <p className="text-xs text-[#6B6B6B] mb-2">
+                        Tambahkan instruksi spesifik Anda (misalnya: "ubah latar belakang menjadi kastil abad pertengahan").
+                      </p>
+                      <input
+                        type="text"
+                        value={customInstructions}
+                        onChange={(e) => setCustomInstructions(e.target.value)}
+                        placeholder="Atmospheric modifier atau instruksi tambahan..."
+                        className="w-full bg-[#F7F7F5] border-none rounded-lg px-4 py-3 text-xs text-[#111111] placeholder:text-neutral-400 focus:ring-1 focus:ring-[#5B4FD8]"
+                      />
+                    </div>
+                  )}
                 </div>
 
               </div>
 
-              {/* INDONESIAN CONSTITUENTS BREAKDOWN CARDS */}
-              <div className="bg-white rounded-[24px] p-6 space-y-5 shadow-[0_4px_24px_rgba(41,40,39,0.02)]">
-                
-                <div className="pb-3 flex items-center justify-between">
-                  <span className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-1.5">
-                    <Eye className="h-3.5 w-3.5 text-iris" />
-                    Bongkahan Elemen Gambar
-                  </span>
-                  <span className="text-[9px] font-bold font-mono text-graphite/85 bg-parchment-canvas/80 px-2 py-0.5 rounded uppercase tracking-wider">
-                    BAHASA INDONESIA
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs leading-relaxed">
-                  
-                  {/* MAIN SUBJECT (full size context) */}
-                  <div className="p-4 bg-parchment-canvas/30 hover:bg-parchment-canvas/50 transition-colors rounded-2xl flex flex-col md:col-span-2 space-y-1.5">
-                    <div className="flex items-center gap-2 text-ink">
-                      <div className="p-1.5 rounded-lg bg-white shrink-0 text-iris shadow-2xs">
-                        <Compass className="h-4 w-4" />
-                      </div>
-                      <span className="font-bold text-ink">Subjek & Detail Konstruksi Body</span>
-                    </div>
-                    <p className="text-graphite text-xs leading-normal font-normal pl-0.5">{analysisResult.subject}</p>
-                  </div>
-
-                  {/* SIDE-BY-SIDE: GAYA */}
-                  <div className="p-4 bg-parchment-canvas/30 hover:bg-parchment-canvas/50 transition-colors rounded-2xl flex flex-col space-y-1.5">
-                    <div className="flex items-center gap-2 text-ink">
-                      <div className="p-1.5 rounded-lg bg-white shrink-0 text-iris shadow-2xs">
-                        <Cpu className="h-4 w-4" />
-                      </div>
-                      <span className="font-bold text-ink">Medium Seni & Gaya Gambar</span>
-                    </div>
-                    <p className="text-graphite text-xs leading-normal font-normal pl-0.5">{analysisResult.style}</p>
-                  </div>
-
-                  {/* SIDE-BY-SIDE: WARNA */}
-                  <div className="p-4 bg-parchment-canvas/30 hover:bg-parchment-canvas/50 transition-colors rounded-2xl flex flex-col space-y-1.5">
-                    <div className="flex items-center gap-2 text-ink">
-                      <div className="p-1.5 rounded-lg bg-white shrink-0 text-iris shadow-2xs">
-                        <Palette className="h-4 w-4" />
-                      </div>
-                      <span className="font-bold text-ink">Palet Warna Utama</span>
-                    </div>
-                    <p className="text-graphite text-xs leading-normal font-normal pl-0.5">{analysisResult.colors}</p>
-                  </div>
-
-                  {/* SIDE-BY-SIDE: KOMPOSISI */}
-                  <div className="p-4 bg-parchment-canvas/30 hover:bg-parchment-canvas/50 transition-colors rounded-2xl flex flex-col space-y-1.5">
-                    <div className="flex items-center gap-2 text-ink">
-                      <div className="p-1.5 rounded-lg bg-white shrink-0 text-iris shadow-2xs">
-                        <Monitor className="h-4 w-4" />
-                      </div>
-                      <span className="font-bold text-ink">Lensa & Susunan Komposisi</span>
-                    </div>
-                    <p className="text-graphite text-xs leading-normal font-normal pl-0.5">{analysisResult.composition}</p>
-                  </div>
-
-                  {/* SIDE-BY-SIDE: ATMOSFER */}
-                  <div className="p-4 bg-parchment-canvas/30 hover:bg-parchment-canvas/50 transition-colors rounded-2xl flex flex-col space-y-1.5">
-                    <div className="flex items-center gap-2 text-ink">
-                      <div className="p-1.5 rounded-lg bg-white shrink-0 text-iris shadow-2xs">
-                        <Lightbulb className="h-4 w-4" />
-                      </div>
-                      <span className="font-bold text-ink">Pendaran Cahaya & Atmosfer</span>
-                    </div>
-                    <p className="text-graphite text-xs leading-normal font-normal pl-0.5">{analysisResult.lighting}</p>
-                  </div>
-
-                </div>
-
-              </div>
+              {/* ACTION EXECUTE BUTTON - Big rounded full pill */}
+              <button
+                type="button"
+                onClick={handleAnalyzeImage}
+                disabled={loading || !selectedImage}
+                className={`w-full py-4 rounded-full font-medium text-sm tracking-wide transition-all select-none cursor-pointer flex items-center justify-center gap-2 ${
+                  loading 
+                    ? "bg-[#6B6B6B] text-white cursor-wait" 
+                    : !selectedImage 
+                      ? "bg-neutral-200 text-[#6B6B6B] cursor-not-allowed" 
+                      : "bg-[#5B4FD8] hover:bg-[#4A3EBE] text-white active:scale-[0.99]"
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>MENGANALISIS DATA GAMBAR...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    <span>BUAT PROMPT SEKARANG</span>
+                  </>
+                )}
+              </button>
 
             </div>
-          )}
 
-          {/* FALLBACK BLANK CABINET */}
-          {!loading && !analysisResult && (
-            <div className="bg-white rounded-[24px] p-8 text-center space-y-4 min-h-[440px] flex flex-col justify-center items-center shadow-[0_4px_24px_rgba(41,40,39,0.02)]">
-              <div className="h-12 w-12 rounded-full bg-parchment-canvas flex items-center justify-center text-graphite/70 shadow-2xs">
-                <Sliders className="h-5 w-5" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-sm font-bold text-ink uppercase tracking-wide">
-                  Visualisasi Belum Dibedah
-                </h4>
-                <p className="text-xs text-graphite max-w-[260px] mx-auto leading-relaxed">
-                  Unggah foto kreasi Anda di panel sebelah kiri, atau pilih salah satu ilustrasi di galeri instan di bawah ini.
-                </p>
-              </div>
+            {/* RIGHT COLUMN: Results and breakdowns */}
+            <div className="space-y-8">
+              
+              <AnimatePresence mode="wait">
+                {loading ? (
+                  <motion.div 
+                    key="loader"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="bg-white border border-[#EBEBEB] rounded-2xl p-8 text-center min-h-[460px] flex flex-col justify-center items-center relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-0 w-full h-1 bg-neutral-100">
+                      <div 
+                        className="bg-[#5B4FD8] h-full transition-all duration-300" 
+                        style={{ width: `${((loadingStep + 1) / progressSteps.length) * 100}%` }}
+                      />
+                    </div>
+                    
+                    <div className="h-12 w-12 rounded-full bg-[#F7F7F5] flex items-center justify-center text-[#5B4FD8] mb-4">
+                      <RefreshCw className="h-5 w-5 animate-spin" />
+                    </div>
+
+                    <h3 className="text-sm font-medium uppercase tracking-wider text-[#111111] mb-2">Analyzing Cosmic Pixels</h3>
+                    <p className="text-xs text-[#6B6B6B] max-w-xs mx-auto mb-6 leading-relaxed">
+                      Model AI canggih server-side Gemini tengah membongkar struktur batin foto Anda ke dalam metrik parameter seni generator.
+                    </p>
+
+                    <span className="text-xs font-mono font-medium text-[#5B4FD8] bg-[#5B4FD8]/5 px-3 py-1.5 rounded-full border border-[#5B4FD8]/10">
+                      {progressSteps[loadingStep]}
+                    </span>
+                  </motion.div>
+                ) : analysisResult ? (
+                  <motion.div 
+                    key="results"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                    className="space-y-8 animate-fade-in-up"
+                  >
+                    
+                    {/* GENERATED PROMPT OUTPUT BOX */}
+                    <div className="bg-[#111111] text-white rounded-2xl overflow-hidden shadow-sm">
+                      <div className="bg-neutral-900/60 px-5 py-3.5 border-b border-white/5 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] font-mono tracking-wider font-bold text-neutral-400 block uppercase">
+                            NANO BANANA PROMPT CODE
+                          </span>
+                          <span className="text-[9px] text-[#6B6B6B] block">Optimized directly for Nano Banana engine</span>
+                        </div>
+
+                        <button
+                          onClick={() => handleCopy(analysisResult.promptUniversal, 'universal')}
+                          className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs font-medium text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          {copiedStates['universal'] ? (
+                            <>
+                              <Check className="h-3.5 w-3.5 text-emerald-400" />
+                              <span className="text-emerald-400 font-bold">Tersalin!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3.5 w-3.5 text-white/80" />
+                              <span>Salin Prompt</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="p-6">
+                        <div className="p-4 bg-neutral-950/80 rounded-xl font-mono text-sm text-neutral-200 leading-relaxed break-words select-all whitespace-pre-wrap select-all">
+                          {analysisResult.promptUniversal}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* HIGH-END STACKED ACCORDIONS FOR INDONESIAN BREAKDOWN */}
+                    <div className="bg-white border border-[#EBEBEB] rounded-2xl p-6 space-y-4">
+                      <div className="pb-2 border-b border-neutral-50">
+                        <span className="text-[11px] font-medium uppercase tracking-wider text-[#6B6B6B] block">
+                          Bongkahan Elemen Gambar (Bahasa Indonesia)
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        
+                        {/* A. SUBJEK ACCORDION */}
+                        <div className="border border-neutral-100 rounded-lg overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => toggleBreakdownSec('subject')}
+                            className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
+                          >
+                            <span className="text-xs font-semibold text-[#111111]">Subjek & Konstruksi Karakter</span>
+                            {openBreakdown.subject ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          </button>
+                          {openBreakdown.subject && (
+                            <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
+                              {analysisResult.subject}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* B. GAYA ACCORDION */}
+                        <div className="border border-neutral-100 rounded-lg overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => toggleBreakdownSec('style')}
+                            className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
+                          >
+                            <span className="text-xs font-semibold text-[#111111]">Karya Seni & Medium Gaya</span>
+                            {openBreakdown.style ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          </button>
+                          {openBreakdown.style && (
+                            <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
+                              {analysisResult.style}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* C. WARNA ACCORDION */}
+                        <div className="border border-neutral-100 rounded-lg overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => toggleBreakdownSec('colors')}
+                            className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
+                          >
+                            <span className="text-xs font-semibold text-[#111111]">Color Grading & Skema Warna</span>
+                            {openBreakdown.colors ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          </button>
+                          {openBreakdown.colors && (
+                            <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
+                              {analysisResult.colors}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* D. KOMPOSISI ACCORDION */}
+                        <div className="border border-neutral-100 rounded-lg overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => toggleBreakdownSec('composition')}
+                            className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
+                          >
+                            <span className="text-xs font-semibold text-[#111111]">Kamera, Lensa & Komposisi</span>
+                            {openBreakdown.composition ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          </button>
+                          {openBreakdown.composition && (
+                            <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
+                              {analysisResult.composition}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* E. PENCINTA CAHAYA ACCORDION */}
+                        <div className="border border-neutral-100 rounded-lg overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => toggleBreakdownSec('lighting')}
+                            className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
+                          >
+                            <span className="text-xs font-semibold text-[#111111]">Pencahayaan & Atmosfer</span>
+                            {openBreakdown.lighting ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          </button>
+                          {openBreakdown.lighting && (
+                            <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
+                              {analysisResult.lighting}
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="empty"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="bg-white border border-[#EBEBEB] rounded-2xl p-8 text-center min-h-[440px] flex flex-col justify-center items-center"
+                  >
+                    <div className="h-10 w-10 bg-[#F7F7F5] rounded-full flex items-center justify-center text-[#6B6B6B] mb-4">
+                      <Sliders className="h-4 w-4" />
+                    </div>
+                    <h4 className="text-sm font-medium uppercase tracking-wider text-[#111111] mb-2 leading-none">
+                      Kabin Deteksi Masih Kosong
+                    </h4>
+                    <p className="text-xs text-[#6B6B6B] max-w-xs mx-auto leading-relaxed">
+                      Unggah rancangan visual Anda di panel kiri atau ketuk salah satu gambar contoh di galeri galon uji coba instan di bawah ini.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
             </div>
-          )}
 
-        </div>
-
-      </main>
-
-      {/* 5. INSTANT VISUAL TESTBENCH GALLERY */}
-      <section className="bg-white border-t border-fog py-10 px-4 shrink-0">
-        <div className="max-w-[1200px] mx-auto space-y-4">
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex h-2 w-2 rounded-full bg-iris"></span>
-            <h3 className="font-display font-semibold text-xs text-ink uppercase tracking-wider">
-              Uji Coba Instan dengan Galeri Visual
-            </h3>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        </main>
+      </section>
+
+      {/* GALLERY SECTION: Horizontal/strip grids with metadata and interactions */}
+      <section id="gallery" className="bg-white border-t border-neutral-100 py-[100px] px-6">
+        <div className="max-w-[1120px] mx-auto space-y-8">
+          
+          <div className="text-left space-y-1">
+            <p className="text-[11px] font-bold tracking-widest text-[#6B6B6B] uppercase">INSTANT EVALUATION</p>
+            <h3 className="text-2xl font-normal text-[#111111] tracking-tight">
+              Galeri Uji Coba Instan
+            </h3>
+            <p className="text-xs text-[#6B6B6B]">
+              Klik salah satu gambar artistik di bawah untuk langsung menguji kepiawaian analisis dekonstruksi prompt engine Nano Banana.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {SAMPLE_IMAGES.map((sample) => {
               const isActive = selectedImage === sample.imageUrl;
               return (
                 <div
                   key={sample.id}
                   onClick={() => handleSelectSample(sample)}
-                  className={`cursor-pointer rounded-2xl overflow-hidden bg-white p-2 transition-all duration-300 outline-none ${
+                  className={`group cursor-pointer rounded-2xl overflow-hidden bg-white border p-2 transition-all duration-300 outline-none ${
                     isActive 
-                      ? "ring-2 ring-iris shadow-[0_8px_24px_rgba(113,76,182,0.12)]" 
-                      : "shadow-[0_2px_12px_rgba(41,40,39,0.015)] hover:shadow-[0_8px_24px_rgba(41,40,39,0.04)] hover:-translate-y-0.5"
+                      ? "border-[#5B4FD8] ring-1 ring-[#5B4FD8]" 
+                      : "border-[#EBEBEB] hover:border-[#CCCCCC]"
                   }`}
                 >
-                  <div className="h-20 w-full overflow-hidden rounded-lg relative">
+                  <div className="h-32 w-full overflow-hidden rounded-xl relative bg-[#F7F7F5]">
                     <img 
                       src={sample.imageUrl} 
                       alt={sample.title} 
-                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       referrerPolicy="no-referrer"
                     />
+                    {/* Hover subtle label overlay */}
+                    <div className="absolute inset-0 bg-[#111111]/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-[10px] uppercase font-mono tracking-widest text-white font-semibold bg-[#111111]/80 px-2.5 py-1 rounded-full">
+                        Load preset
+                      </span>
+                    </div>
                   </div>
-                  <div className="pt-2 px-1 text-center">
-                    <h5 className="text-[11px] font-bold text-ink truncate leading-tight select-none">{sample.title}</h5>
-                    <p className="text-[9px] text-graphite font-mono uppercase tracking-wider mt-0.5 select-none">{sample.category}</p>
+                  <div className="pt-3 px-1.5 space-y-0.5">
+                    <h5 className="text-xs font-semibold text-[#111111] truncate">{sample.title}</h5>
+                    <p className="text-[10px] text-[#6B6B6B] uppercase font-mono tracking-wider">{sample.category}</p>
                   </div>
                 </div>
               );
             })}
           </div>
+
         </div>
       </section>
 
-      {/* 6. CORNERED COCKPIT BRACKET FOOTER */}
-      <footer className="bg-white border-t border-fog py-5 px-4 text-center text-xs text-graphite shrink-0 mt-auto">
-        <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="flex items-center gap-1">
-            Terus Belajar &bull; NanoPrompt Pro &bull; <a href="https://instagram.com/snnn_0110001" target="_blank" rel="noopener noreferrer" className="hover:text-iris font-semibold transition-colors flex items-center gap-1"><Instagram className="h-3 w-3" />Instagram</a>
+      {/* MINIMAL ONE-LINE FOOTER - No heavy borders */}
+      <footer className="bg-white border-t border-neutral-100/60 py-8 px-6 text-[#6B6B6B] text-xs">
+        <div className="max-w-[1120px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-[#111111]">NanoPrompt Pro</span>
+            <span>&bull;</span>
+            <span className="text-[11px]">Terus Belajar</span>
+          </div>
+
+          <p className="text-[10px] text-[#6B6B6B]/80 font-mono">
+            Unveiling high-end visual prompts &bull; Armed with Gemini
           </p>
-          <p className="text-[10px] font-mono text-graphite/80">
-            Powered by Gemini Multi-Response Architecture &bull; API Shield Active
-          </p>
+
+          <a 
+            href="https://instagram.com/snnn_0110001" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="hover:text-[#5B4FD8] font-medium transition-colors inline-flex items-center gap-1"
+          >
+            <Instagram className="h-3.5 w-3.5" />
+            <span>Instagram</span>
+          </a>
         </div>
       </footer>
 
