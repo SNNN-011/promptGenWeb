@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { 
   Camera, 
   Sparkles, 
@@ -383,7 +382,7 @@ export default function App() {
                     <div className="flex items-center gap-2.5">
                       <Sliders className="h-4 w-4 text-[#5B4FD8]" />
                       <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
-                        1. Pilih yang Akan Dianalisis
+                        1. Pilih yang Alan Dianalisis
                       </span>
                     </div>
                     {openParams.extraction ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
@@ -581,201 +580,185 @@ export default function App() {
             {/* RIGHT COLUMN: Results and breakdowns */}
             <div className="space-y-8">
               
-              <AnimatePresence mode="wait">
-                {loading ? (
-                  <motion.div 
-                    key="loader"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="bg-white border border-[#EBEBEB] rounded-2xl p-8 text-center min-h-[460px] flex flex-col justify-center items-center relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 left-0 w-full h-1 bg-neutral-100">
-                      <div 
-                        className="bg-[#5B4FD8] h-full transition-all duration-300" 
-                        style={{ width: `${((loadingStep + 1) / progressSteps.length) * 100}%` }}
-                      />
-                    </div>
-                    
-                    <div className="h-12 w-12 rounded-full bg-[#F7F7F5] flex items-center justify-center text-[#5B4FD8] mb-4">
-                      <RefreshCw className="h-5 w-5 animate-spin" />
-                    </div>
+              {/* INTERMEDIARY LOADER STATUS */}
+              {loading && (
+                <div className="bg-white border border-[#EBEBEB] rounded-2xl p-8 text-center min-h-[460px] flex flex-col justify-center items-center relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-neutral-100">
+                    <div 
+                      className="bg-[#5B4FD8] h-full transition-all duration-300" 
+                      style={{ width: `${((loadingStep + 1) / progressSteps.length) * 100}%` }}
+                    />
+                  </div>
+                  
+                  <div className="h-12 w-12 rounded-full bg-[#F7F7F5] flex items-center justify-center text-[#5B4FD8] mb-4">
+                    <RefreshCw className="h-5 w-5 animate-spin" />
+                  </div>
 
-                    <h3 className="text-sm font-medium uppercase tracking-wider text-[#111111] mb-2">Analyzing Cosmic Pixels</h3>
-                    <p className="text-xs text-[#6B6B6B] max-w-xs mx-auto mb-6 leading-relaxed">
-                      Model AI canggih server-side Gemini tengah membongkar struktur batin foto Anda ke dalam metrik parameter seni generator.
-                    </p>
+                  <h3 className="text-sm font-medium uppercase tracking-wider text-[#111111] mb-2">Analyzing Cosmic Pixels</h3>
+                  <p className="text-xs text-[#6B6B6B] max-w-xs mx-auto mb-6 leading-relaxed">
+                    Model AI canggih server-side Gemini tengah membongkar struktur batin foto Anda ke dalam metrik parameter seni generator.
+                  </p>
 
-                    <span className="text-xs font-mono font-medium text-[#5B4FD8] bg-[#5B4FD8]/5 px-3 py-1.5 rounded-full border border-[#5B4FD8]/10">
-                      {progressSteps[loadingStep]}
-                    </span>
-                  </motion.div>
-                ) : analysisResult ? (
-                  <motion.div 
-                    key="results"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                    className="space-y-8 animate-fade-in-up"
-                  >
-                    
-                    {/* GENERATED PROMPT OUTPUT BOX */}
-                    <div className="bg-[#111111] text-white rounded-2xl overflow-hidden shadow-sm">
-                      <div className="bg-neutral-900/60 px-5 py-3.5 border-b border-white/5 flex items-center justify-between">
-                        <div>
-                          <span className="text-[10px] font-mono tracking-wider font-bold text-neutral-400 block uppercase">
-                            NANO BANANA PROMPT CODE
-                          </span>
-                          <span className="text-[9px] text-[#6B6B6B] block">Optimized directly for Nano Banana engine</span>
-                        </div>
+                  <span className="text-xs font-mono font-medium text-[#5B4FD8] bg-[#5B4FD8]/5 px-3 py-1.5 rounded-full border border-[#5B4FD8]/10">
+                    {progressSteps[loadingStep]}
+                  </span>
+                </div>
+              )}
 
-                        <button
-                          onClick={() => handleCopy(analysisResult.promptUniversal, 'universal')}
-                          className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs font-medium text-white transition-all flex items-center gap-1.5 cursor-pointer"
-                        >
-                          {copiedStates['universal'] ? (
-                            <>
-                              <Check className="h-3.5 w-3.5 text-emerald-400" />
-                              <span className="text-emerald-400 font-bold">Tersalin!</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-3.5 w-3.5 text-white/80" />
-                              <span>Salin Prompt</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      <div className="p-6">
-                        <div className="p-4 bg-neutral-950/80 rounded-xl font-mono text-sm text-neutral-200 leading-relaxed break-words select-all whitespace-pre-wrap select-all">
-                          {analysisResult.promptUniversal}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* HIGH-END STACKED ACCORDIONS FOR INDONESIAN BREAKDOWN */}
-                    <div className="bg-white border border-[#EBEBEB] rounded-2xl p-6 space-y-4">
-                      <div className="pb-2 border-b border-neutral-50">
-                        <span className="text-[11px] font-medium uppercase tracking-wider text-[#6B6B6B] block">
-                          Bongkahan Elemen Gambar (Bahasa Indonesia)
+              {/* MAIN PROMPT CODE BLOCK OUTPUT */}
+              {!loading && analysisResult && (
+                <div className="space-y-8">
+                  
+                  {/* GENERATED PROMPT OUTPUT BOX */}
+                  <div className="bg-[#111111] text-white rounded-2xl overflow-hidden shadow-sm">
+                    <div className="bg-neutral-900/60 px-5 py-3.5 border-b border-white/5 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-mono tracking-wider font-bold text-neutral-400 block uppercase">
+                          NANO BANANA PROMPT CODE
                         </span>
+                        <span className="text-[9px] text-[#6B6B6B] block">Optimized directly for Nano Banana engine</span>
                       </div>
 
-                      <div className="space-y-2">
-                        
-                        {/* A. SUBJEK ACCORDION */}
-                        <div className="border border-neutral-100 rounded-lg overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => toggleBreakdownSec('subject')}
-                            className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
-                          >
-                            <span className="text-xs font-semibold text-[#111111]">Subjek & Konstruksi Karakter</span>
-                            {openBreakdown.subject ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                          </button>
-                          {openBreakdown.subject && (
-                            <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
-                              {analysisResult.subject}
-                            </div>
-                          )}
-                        </div>
+                      <button
+                        onClick={() => handleCopy(analysisResult.promptUniversal, 'universal')}
+                        className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs font-medium text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        {copiedStates['universal'] ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-emerald-400" />
+                            <span className="text-emerald-400 font-bold">Tersalin!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5 text-white/80" />
+                            <span>Salin Prompt</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
 
-                        {/* B. GAYA ACCORDION */}
-                        <div className="border border-neutral-100 rounded-lg overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => toggleBreakdownSec('style')}
-                            className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
-                          >
-                            <span className="text-xs font-semibold text-[#111111]">Karya Seni & Medium Gaya</span>
-                            {openBreakdown.style ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                          </button>
-                          {openBreakdown.style && (
-                            <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
-                              {analysisResult.style}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* C. WARNA ACCORDION */}
-                        <div className="border border-neutral-100 rounded-lg overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => toggleBreakdownSec('colors')}
-                            className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
-                          >
-                            <span className="text-xs font-semibold text-[#111111]">Color Grading & Skema Warna</span>
-                            {openBreakdown.colors ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                          </button>
-                          {openBreakdown.colors && (
-                            <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
-                              {analysisResult.colors}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* D. KOMPOSISI ACCORDION */}
-                        <div className="border border-neutral-100 rounded-lg overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => toggleBreakdownSec('composition')}
-                            className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
-                          >
-                            <span className="text-xs font-semibold text-[#111111]">Kamera, Lensa & Komposisi</span>
-                            {openBreakdown.composition ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                          </button>
-                          {openBreakdown.composition && (
-                            <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
-                              {analysisResult.composition}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* E. PENCINTA CAHAYA ACCORDION */}
-                        <div className="border border-neutral-100 rounded-lg overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => toggleBreakdownSec('lighting')}
-                            className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
-                          >
-                            <span className="text-xs font-semibold text-[#111111]">Pencahayaan & Atmosfer</span>
-                            {openBreakdown.lighting ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                          </button>
-                          {openBreakdown.lighting && (
-                            <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
-                              {analysisResult.lighting}
-                            </div>
-                          )}
-                        </div>
-
+                    <div className="p-6">
+                      <div className="p-4 bg-neutral-950/80 rounded-xl font-mono text-sm text-neutral-200 leading-relaxed break-words select-all whitespace-pre-wrap select-all">
+                        {analysisResult.promptUniversal}
                       </div>
                     </div>
+                  </div>
 
-                  </motion.div>
-                ) : (
-                  <motion.div 
-                    key="empty"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="bg-white border border-[#EBEBEB] rounded-2xl p-8 text-center min-h-[440px] flex flex-col justify-center items-center"
-                  >
-                    <div className="h-10 w-10 bg-[#F7F7F5] rounded-full flex items-center justify-center text-[#6B6B6B] mb-4">
-                      <Sliders className="h-4 w-4" />
+                  {/* HIGH-END STACKED ACCORDIONS FOR INDONESIAN BREAKDOWN */}
+                  <div className="bg-white border border-[#EBEBEB] rounded-2xl p-6 space-y-4">
+                    <div className="pb-2 border-b border-neutral-50">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-[#6B6B6B] block">
+                        Bongkahan Elemen Gambar (Bahasa Indonesia)
+                      </span>
                     </div>
-                    <h4 className="text-sm font-medium uppercase tracking-wider text-[#111111] mb-2 leading-none">
-                      Kabin Deteksi Masih Kosong
-                    </h4>
-                    <p className="text-xs text-[#6B6B6B] max-w-xs mx-auto leading-relaxed">
-                      Unggah rancangan visual Anda di panel kiri atau ketuk salah satu gambar contoh di galeri galon uji coba instan di bawah ini.
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
+                    <div className="space-y-2">
+                      
+                      {/* A. SUBJEK ACCORDION */}
+                      <div className="border border-neutral-100 rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => toggleBreakdownSec('subject')}
+                          className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
+                        >
+                          <span className="text-xs font-semibold text-[#111111]">Subjek & Konstruksi Karakter</span>
+                          {openBreakdown.subject ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        </button>
+                        {openBreakdown.subject && (
+                          <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
+                            {analysisResult.subject}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* B. GAYA ACCORDION */}
+                      <div className="border border-neutral-100 rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => toggleBreakdownSec('style')}
+                          className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
+                        >
+                          <span className="text-xs font-semibold text-[#111111]">Karya Seni & Medium Gaya</span>
+                          {openBreakdown.style ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        </button>
+                        {openBreakdown.style && (
+                          <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
+                            {analysisResult.style}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* C. WARNA ACCORDION */}
+                      <div className="border border-neutral-100 rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => toggleBreakdownSec('colors')}
+                          className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
+                        >
+                          <span className="text-xs font-semibold text-[#111111]">Color Grading & Skema Warna</span>
+                          {openBreakdown.colors ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        </button>
+                        {openBreakdown.colors && (
+                          <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
+                            {analysisResult.colors}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* D. KOMPOSISI ACCORDION */}
+                      <div className="border border-neutral-100 rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => toggleBreakdownSec('composition')}
+                          className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
+                        >
+                          <span className="text-xs font-semibold text-[#111111]">Kamera, Lensa & Komposisi</span>
+                          {openBreakdown.composition ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        </button>
+                        {openBreakdown.composition && (
+                          <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
+                            {analysisResult.composition}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* E. PENCINTA CAHAYA ACCORDION */}
+                      <div className="border border-neutral-100 rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => toggleBreakdownSec('lighting')}
+                          className="w-full px-4 py-3 bg-[#F7F7F5]/40 hover:bg-[#F7F7F5] flex items-center justify-between text-left cursor-pointer transition-colors"
+                        >
+                          <span className="text-xs font-semibold text-[#111111]">Pencahayaan & Atmosfer</span>
+                          {openBreakdown.lighting ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        </button>
+                        {openBreakdown.lighting && (
+                          <div className="p-4 text-xs text-[#6B6B6B] leading-relaxed border-t border-neutral-100 bg-white">
+                            {analysisResult.lighting}
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* UNANALYSED LANDING SCREEN WITH TIPS */}
+              {!loading && !analysisResult && (
+                <div className="bg-white border border-[#EBEBEB] rounded-2xl p-8 text-center min-h-[440px] flex flex-col justify-center items-center">
+                  <div className="h-10 w-10 bg-[#F7F7F5] rounded-full flex items-center justify-center text-[#6B6B6B] mb-4">
+                    <Sliders className="h-4 w-4" />
+                  </div>
+                  <h4 className="text-sm font-medium uppercase tracking-wider text-[#111111] mb-2 leading-none">
+                    Kabin Deteksi Masih Kosong
+                  </h4>
+                  <p className="text-xs text-[#6B6B6B] max-w-xs mx-auto leading-relaxed">
+                    Unggah rancangan visual Anda di panel kiri atau ketuk salah satu gambar contoh di galeri galon uji coba instan di bawah ini.
+                  </p>
+                </div>
+              )}
 
             </div>
 
