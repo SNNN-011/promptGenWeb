@@ -382,7 +382,7 @@ export default function App() {
                     <div className="flex items-center gap-2.5">
                       <Sliders className="h-4 w-4 text-[#5B4FD8]" />
                       <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
-                        1. Pilih yang Akan Dianalisis
+                        1. Pilih yang Alan Dianalisis
                       </span>
                     </div>
                     {openParams.extraction ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
@@ -525,7 +525,7 @@ export default function App() {
                     <div className="flex items-center gap-2.5">
                       <Settings className="h-4 w-4 text-[#5B4FD8]" />
                       <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
-                        4. Catatan Tambahan
+                        4. Catatan Atmosfer Tambahan
                       </span>
                     </div>
                     {openParams.custom ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
