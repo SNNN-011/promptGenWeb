@@ -32,7 +32,7 @@ export default function App() {
   const [selectedImage, setSelectedImage] = useState<string | null>(SAMPLE_IMAGES[0].imageUrl);
   const [mimeType, setMimeType] = useState<string>("image/jpeg");
   
-  const [activeTab, setActiveTab] = useState<'prompt' | 'detector'>("prompt");
+  const [activeTab, setActiveTab] = useState<'prompt' | 'detector'>("detector");
   
   const [aspectToExtract, setAspectToExtract] = useState<('semua' | 'subjek' | 'gaya' | 'komposisi' | 'pencahayaan' | 'warna')[]>(["semua"]);
   const [generator] = useState<string>("Nano Banana Engine");
@@ -346,22 +346,6 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => {
-                    setActiveTab('prompt');
-                    setError(null);
-                  }}
-                  className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-full transition-all cursor-pointer ${
-                    selectedImage ? "" : "opacity-80"
-                  } ${
-                    activeTab === 'prompt' 
-                      ? "bg-white text-[#111111] shadow-xs" 
-                      : "text-[#6B6B6B] hover:text-[#111111]"
-                  }`}
-                >
-                  Prompt Generator
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
                     setActiveTab('detector');
                     setError(null);
                   }}
@@ -374,6 +358,22 @@ export default function App() {
                   }`}
                 >
                   Autentisitas & Deteksi AI
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('prompt');
+                    setError(null);
+                  }}
+                  className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-full transition-all cursor-pointer ${
+                    selectedImage ? "" : "opacity-80"
+                  } ${
+                    activeTab === 'prompt' 
+                      ? "bg-white text-[#111111] shadow-xs" 
+                      : "text-[#6B6B6B] hover:text-[#111111]"
+                  }`}
+                >
+                  Prompt Generator
                 </button>
               </div>
             </div>
