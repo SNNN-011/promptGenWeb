@@ -20,3 +20,11 @@ export interface ImageAnalysisResponse {
   promptUniversal: string;
   additionalTips: string;
 }
+
+export interface ImageDetectionResponse {
+  percentage: number;
+  classification: string;
+  visualArtifacts: string;
+  metadataDugaan: string;
+  saranVerifikasi: string;
+}

@@ -26,11 +26,13 @@ import {
   ArrowRight
 } from "lucide-react";
 import { SAMPLE_IMAGES, PRESET_RATIOS, PRESET_STYLES, PRESET_DETAILS, PRESET_ASPECT_EXTRACT } from "./data";
-import { ImageAnalysisResponse } from "./types";
+import { ImageAnalysisResponse, ImageDetectionResponse } from "./types";
 
 export default function App() {
   const [selectedImage, setSelectedImage] = useState<string | null>(SAMPLE_IMAGES[0].imageUrl);
   const [mimeType, setMimeType] = useState<string>("image/jpeg");
+  
+  const [activeTab, setActiveTab] = useState<'prompt' | 'detector'>("prompt");
   
   const [aspectToExtract, setAspectToExtract] = useState<('semua' | 'subjek' | 'gaya' | 'komposisi' | 'pencahayaan' | 'warna')[]>(["semua"]);
   const [generator] = useState<string>("Nano Banana Engine");
@@ -58,6 +60,8 @@ export default function App() {
   };
 
   const [analysisResult, setAnalysisResult] = useState<ImageAnalysisResponse | null>(SAMPLE_IMAGES[0].precalculatedResponse);
+  const [detectionResult, setDetectionResult] = useState<ImageDetectionResponse | null>(SAMPLE_IMAGES[0].precalculatedDetection);
+  
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingStep, setLoadingStep] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +70,6 @@ export default function App() {
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Accordion open/close states for parameters panel
   const [openParams, setOpenParams] = useState<Record<string, boolean>>({
     extraction: true,
     format: true,
@@ -78,7 +81,6 @@ export default function App() {
     setOpenParams(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // Stacked accordion states for Indonesian Visual Breakdown result
   const [openBreakdown, setOpenBreakdown] = useState<Record<string, boolean>>({
     subject: true,
     style: false,
@@ -135,6 +137,7 @@ export default function App() {
       setSelectedImage(reader.result as string);
       setMimeType(file.type);
       setAnalysisResult(null);
+      setDetectionResult(null);
       setError(null);
     };
     reader.onerror = () => {
@@ -146,13 +149,17 @@ export default function App() {
   const handleSelectSample = (sample: typeof SAMPLE_IMAGES[number]) => {
     setSelectedImage(sample.imageUrl);
     setMimeType("image/jpeg");
-    setAnalysisResult(sample.precalculatedResponse);
-    setArtisticStyle("original");
     setError(null);
+    if (activeTab === "prompt") {
+      setAnalysisResult(sample.precalculatedResponse);
+    } else {
+      setDetectionResult(sample.precalculatedDetection);
+    }
+    setArtisticStyle("original");
     
-    // Auto scroll down to workspace smoothly
     document.getElementById("workspace")?.scrollIntoView({ behavior: "smooth" });
   };
+
 
   const handleAnalyzeImage = async () => {
     if (!selectedImage) {
@@ -209,6 +216,42 @@ export default function App() {
     }
   };
 
+  const handleDetectAI = async () => {
+    if (!selectedImage) {
+      setError("Silakan pilih gambar terlebih dahulu.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/detect-ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          image: selectedImage,
+          mimeType: mimeType
+        })
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Gagal memproses deteksi gambar.");
+      }
+
+      setDetectionResult(result.data);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Gagal mendeteksi gambar. Pastikan API key Anda aktif.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedStates((prev) => ({ ...prev, [id]: true }));
@@ -224,11 +267,11 @@ export default function App() {
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-neutral-100 px-6 py-4">
         <div className="max-w-[1120px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="font-sans font-medium text-base tracking-tight text-[#111111]">NanoPrompt</span>
-            <span className="text-[9px] font-bold tracking-wider bg-[#111111] text-white px-1.5 py-0.5 rounded-full">PRO</span>
+            <span className="font-sans font-medium text-base tracking-tight text-[#111111]">NanoPrompt Pro</span>
+            <span className="text-[9px] font-bold tracking-wider bg-[#5B4FD8] text-white px-2 py-0.5 rounded-full">CITRA & FORENSIK SUITE</span>
             <div className="hidden sm:flex items-center gap-1.5 ml-4 text-[10px] text-[#6B6B6B] font-mono uppercase tracking-wider">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Gemini 3.x Failover Engine Active</span>
+              <span>Gemini 3.x Dual-Engine Active</span>
             </div>
           </div>
 
@@ -263,13 +306,13 @@ export default function App() {
         
         <div className="max-w-[1120px] mx-auto relative z-10">
           <p className="text-[11px] font-medium tracking-widest text-[#5B4FD8] uppercase mb-4">
-            AI-POWERED IMAGE TO ARTISTIC PROMPT CONVERTER
+            ARTISTIC PROMPT RECONSTRUCTION & FORENSIC AUTHENTICITY SUITE
           </p>
-          <h1 className="text-4xl sm:text-6xl lg:text-[76px] font-light text-[#111111] leading-[1.1] tracking-tight max-w-4xl mb-6">
-            Ubah Gambar Menjadi Deskripsi Prompt Artistik.
+          <h1 className="text-4xl sm:text-6xl lg:text-[72px] font-light text-[#111111] leading-[1.1] tracking-tight max-w-5xl mb-6">
+            Bedah Prompt Artistik & Analisis Forensik Gambar.
           </h1>
-          <p className="text-base sm:text-lg text-[#6B6B6B] leading-relaxed max-w-2xl mb-8">
-            Dapatkan deskripsi visual presisi tingkat tinggi serta formulasi prompt universal bahasa Inggris untuk Nano Banana langsung dari visualisasi foto apa pun dalam satu detik.
+          <p className="text-base sm:text-lg text-[#6B6B6B] leading-relaxed max-w-3xl mb-8">
+            Dua instrumen canggih dalam satu meja kemudi: Ekstrak piksel visual menjadi rumusan prompt artistik bahasa Inggris presisi, atau bongkar keaslian gambar dari manipulasi AI generatif melalui inspeksi manifes biner C2PA, pola sikat kompresi, dan watermark digital SynthID.
           </p>
           
           <div className="flex flex-wrap items-center gap-4">
@@ -277,13 +320,13 @@ export default function App() {
               href="#workspace"
               className="inline-flex items-center gap-2 bg-[#5B4FD8] hover:bg-[#4A3EBE] text-white text-sm font-medium px-6 py-3 rounded-full shadow-xs hover:opacity-90 active:scale-[0.98] transition-all"
             >
-              <span>Mulai Bedah Gambar</span>
+              <span>Mulai Kerja di Kabin</span>
               <ArrowRight className="h-4 w-4" />
             </a>
             <span className="text-xs font-mono text-[#6B6B6B] flex items-center gap-1.5 ml-1">
               <span>EST. PROCESSING: ~2s</span>
               <span>&bull;</span>
-              <span>POWERED BY GEMINI</span>
+              <span>DUAL-ENGINE FORENSICS</span>
             </span>
           </div>
         </div>
@@ -296,7 +339,44 @@ export default function App() {
           {/* Subtitle above workspace grid */}
           <div className="mb-10 text-left">
             <p className="text-[11px] font-bold tracking-wider text-[#6B6B6B] uppercase mb-1">INTERACTIVE DESK</p>
-            <h2 className="text-2xl font-normal text-[#111111] tracking-tight">Main Workbench Cabin</h2>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-1">
+              <h2 className="text-2xl font-normal text-[#111111] tracking-tight">Main Workbench Cabin</h2>
+              
+              <div className="flex bg-neutral-200/50 p-1 rounded-full w-full max-w-[340px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('prompt');
+                    setError(null);
+                  }}
+                  className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-full transition-all cursor-pointer ${
+                    selectedImage ? "" : "opacity-80"
+                  } ${
+                    activeTab === 'prompt' 
+                      ? "bg-white text-[#111111] shadow-xs" 
+                      : "text-[#6B6B6B] hover:text-[#111111]"
+                  }`}
+                >
+                  Prompt Generator
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('detector');
+                    setError(null);
+                  }}
+                  className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-full transition-all cursor-pointer ${
+                    selectedImage ? "" : "opacity-80"
+                  } ${
+                    activeTab === 'detector' 
+                      ? "bg-white text-[#111111] shadow-xs" 
+                      : "text-[#6B6B6B] hover:text-[#111111]"
+                  }`}
+                >
+                  Autentisitas & Deteksi AI
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
@@ -369,190 +449,238 @@ export default function App() {
                 )}
               </div>
 
-              {/* PARAMETER CONFIGURATION - Clean Collapsible Accordion Groups */}
-              <div className="space-y-4">
-                
-                {/* 1. EXTRACT PRIORITIES ACCORDION */}
-                <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
-                  <button 
-                    type="button"
-                    onClick={() => toggleParamSection('extraction')}
-                    className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Sliders className="h-4 w-4 text-[#5B4FD8]" />
-                      <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
-                        1. Pilih yang Alan Dianalisis
-                      </span>
-                    </div>
-                    {openParams.extraction ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
-                  </button>
+              {activeTab === "prompt" ? (
+                <div className="space-y-4">
+                  
+                  {/* 1. EXTRACT PRIORITIES ACCORDION */}
+                  <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
+                    <button 
+                      type="button"
+                      onClick={() => toggleParamSection('extraction')}
+                      className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Sliders className="h-4 w-4 text-[#5B4FD8]" />
+                        <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
+                          1. Pilih yang Alan Dianalisis
+                        </span>
+                      </div>
+                      {openParams.extraction ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
+                    </button>
 
-                  {openParams.extraction && (
-                    <div className="px-6 pb-6 border-t border-neutral-50 pt-4 space-y-3">
-                      <p className="text-xs text-[#6B6B6B] mb-2 leading-relaxed">
-                        Centang komponen visual yang ingin Anda prioritaskan untuk diekstrak menjadi penegas prompt.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {PRESET_ASPECT_EXTRACT.map((a) => {
-                          const isSelected = aspectToExtract.includes(a.id as any);
-                          return (
-                            <button
-                              key={a.id}
-                              type="button"
-                              onClick={() => handleToggleAspect(a.id as any)}
-                              className={`px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
-                                isSelected 
-                                  ? "bg-[#5B4FD8] text-white" 
-                                  : "bg-[#F0F0F0] text-[#111111]/80 hover:bg-[#EAEAEA]"
-                              }`}
-                            >
-                              {a.label}
-                            </button>
-                          );
-                        })}
+                    {openParams.extraction && (
+                      <div className="px-6 pb-6 border-t border-neutral-50 pt-4 space-y-3">
+                        <p className="text-xs text-[#6B6B6B] mb-2 leading-relaxed">
+                          Centang komponen visual yang ingin Anda prioritaskan untuk diekstrak menjadi penegas prompt.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {PRESET_ASPECT_EXTRACT.map((a) => {
+                            const isSelected = aspectToExtract.includes(a.id as any);
+                            return (
+                              <button
+                                key={a.id}
+                                type="button"
+                                onClick={() => handleToggleAspect(a.id as any)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                                  isSelected 
+                                    ? "bg-[#5B4FD8] text-white" 
+                                    : "bg-[#F0F0F0] text-[#111111]/80 hover:bg-[#EAEAEA]"
+                                }`}
+                              >
+                                {a.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. FORMAT & RATIO ACCORDION */}
+                  <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
+                    <button 
+                      type="button"
+                      onClick={() => toggleParamSection('format')}
+                      className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Monitor className="h-4 w-4 text-[#5B4FD8]" />
+                        <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
+                          2. Format Aspek Rasio & Detalitas
+                        </span>
+                      </div>
+                      {openParams.format ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
+                    </button>
+
+                    {openParams.format && (
+                      <div className="px-6 pb-6 border-t border-neutral-50 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-widest text-[#6B6B6B] block">
+                            Aspek Rasio Gambar
+                          </label>
+                          <select
+                            value={aspectRatio}
+                            onChange={(e) => setAspectRatio(e.target.value)}
+                            className="w-full bg-[#F7F7F5] border-none rounded-lg px-3 py-2 text-xs text-[#111111] focus:ring-1 focus:ring-[#5B4FD8] cursor-pointer"
+                          >
+                            {PRESET_RATIOS.map((r) => (
+                              <option key={r.id} value={r.id}>
+                                Nano Banana --ar {r.id}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] uppercase tracking-widest text-[#6B6B6B] block">
+                            Tingkat Presisi Variasi
+                          </label>
+                          <select
+                            value={detailLevel}
+                            onChange={(e) => setDetailLevel(e.target.value as any)}
+                            className="w-full bg-[#F7F7F5] border-none rounded-lg px-3 py-2 text-xs text-[#111111] focus:ring-1 focus:ring-[#5B4FD8] cursor-pointer"
+                          >
+                            {PRESET_DETAILS.map((d) => (
+                              <option key={d.id} value={d.id}>
+                                {d.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. ART STYLE INTERPRETATIONS */}
+                  <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
+                    <button 
+                      type="button"
+                      onClick={() => toggleParamSection('style')}
+                      className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Palette className="h-4 w-4 text-[#5B4FD8]" />
+                        <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
+                          3. Transformasi Gaya Seni (Satu Pilihan)
+                        </span>
+                      </div>
+                      {openParams.style ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
+                    </button>
+
+                    {openParams.style && (
+                      <div className="px-6 pb-6 border-t border-neutral-50 pt-4 space-y-3">
+                        <p className="text-xs text-[#6B6B6B]">
+                          Alas gaya seni baru di atas parameter gambar asli Anda. Generator akan menggabungkan tekstur ini.
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {PRESET_STYLES.map((style) => {
+                            const isActive = artisticStyle === style.id;
+                            return (
+                              <button
+                                key={style.id}
+                                type="button"
+                                onClick={() => setArtisticStyle(style.id)}
+                                className={`px-3 py-2 rounded-lg text-xs font-medium text-left transition-colors cursor-pointer ${
+                                  isActive 
+                                    ? "bg-[#5B4FD8] text-white" 
+                                    : "bg-[#F7F7F5] text-[#111111]/80 hover:bg-[#EBEBEB]"
+                                }`}
+                              >
+                                {style.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4. CUSTOM NOTES ACCORDION */}
+                  <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
+                    <button 
+                      type="button"
+                      onClick={() => toggleParamSection('custom')}
+                      className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Settings className="h-4 w-4 text-[#5B4FD8]" />
+                        <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
+                          4. Catatan Atmosfer Tambahan
+                        </span>
+                      </div>
+                      {openParams.custom ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
+                    </button>
+
+                    {openParams.custom && (
+                      <div className="px-6 pb-6 border-t border-neutral-50 pt-4 space-y-1.5">
+                        <p className="text-xs text-[#6B6B6B] mb-2">
+                          Tambahkan instruksi spesifik Anda (misalnya: "ubah latar belakang menjadi kastil abad pertengahan").
+                        </p>
+                        <input
+                          type="text"
+                          value={customInstructions}
+                          onChange={(e) => setCustomInstructions(e.target.value)}
+                          placeholder="Atmospheric modifier atau instruksi tambahan..."
+                          className="w-full bg-[#F7F7F5] border-none rounded-lg px-4 py-3 text-xs text-[#111111] placeholder:text-neutral-400 focus:ring-1 focus:ring-[#5B4FD8]"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              ) : (
+                <div className="bg-white border border-[#EBEBEB] rounded-2xl p-6 space-y-6">
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-[#111111] mb-1">
+                      Analisis Deteksi & Autentisitas Citra
+                    </h3>
+                    <p className="text-xs text-[#6B6B6B] leading-relaxed">
+                      Layanan forensik digital ini ditenagai deteksi pola struktural biner dan model penglihatan komputer tingkat lanjut untuk mengungkap jejak rekayasa generatif.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 bg-[#F7F7F5] rounded-xl p-4 border border-neutral-100">
+                    <span className="text-[10px] uppercase tracking-widest text-[#6B6B6B] block font-bold">
+                      Metode Deteksi Aktif
+                    </span>
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2 text-xs text-[#111111]">
+                        <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-mono text-[9px] font-bold">✓</div>
+                        <div>
+                          <span className="font-semibold text-neutral-800">Pendeteksian SynthID:</span>
+                          <span className="text-neutral-500 text-[11px] block">Pencarian watermark digital implisit tersemat tingkat piksel.</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-[#111111]">
+                        <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-mono text-[9px] font-bold">✓</div>
+                        <div>
+                          <span className="font-semibold text-neutral-800">Pemeriksaan C2PA Credentials:</span>
+                          <span className="text-neutral-500 text-[11px] block">Pemeriksaan penanda biner manifes JUMBF digital terenkripsi.</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-[#111111]">
+                        <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-mono text-[9px] font-bold">✓</div>
+                        <div>
+                          <span className="font-semibold text-neutral-800">Anatomi & Profiling Piksel:</span>
+                          <span className="text-neutral-500 text-[11px] block">Audit distorsi tangan, detail mata, dan sikat difusi.</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-[#111111]">
+                        <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-mono text-[9px] font-bold">✓</div>
+                        <div>
+                          <span className="font-semibold text-neutral-800">Sidik Kompresi Generator:</span>
+                          <span className="text-neutral-500 text-[11px] block">Pencocokan metadata upscaler & container ekspor.</span>
+                        </div>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
-
-                {/* 2. FORMAT & RATIO ACCORDION */}
-                <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
-                  <button 
-                    type="button"
-                    onClick={() => toggleParamSection('format')}
-                    className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Monitor className="h-4 w-4 text-[#5B4FD8]" />
-                      <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
-                        2. Format Aspek Rasio & Detalitas
-                      </span>
-                    </div>
-                    {openParams.format ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
-                  </button>
-
-                  {openParams.format && (
-                    <div className="px-6 pb-6 border-t border-neutral-50 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] uppercase tracking-widest text-[#6B6B6B] block">
-                          Aspek Rasio Gambar
-                        </label>
-                        <select
-                          value={aspectRatio}
-                          onChange={(e) => setAspectRatio(e.target.value)}
-                          className="w-full bg-[#F7F7F5] border-none rounded-lg px-3 py-2 text-xs text-[#111111] focus:ring-1 focus:ring-[#5B4FD8] cursor-pointer"
-                        >
-                          {PRESET_RATIOS.map((r) => (
-                            <option key={r.id} value={r.id}>
-                              Nano Banana --ar {r.id}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] uppercase tracking-widest text-[#6B6B6B] block">
-                          Tingkat Presisi Variasi
-                        </label>
-                        <select
-                          value={detailLevel}
-                          onChange={(e) => setDetailLevel(e.target.value as any)}
-                          className="w-full bg-[#F7F7F5] border-none rounded-lg px-3 py-2 text-xs text-[#111111] focus:ring-1 focus:ring-[#5B4FD8] cursor-pointer"
-                        >
-                          {PRESET_DETAILS.map((d) => (
-                            <option key={d.id} value={d.id}>
-                              {d.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. ART STYLE INTERPRETATIONS */}
-                <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
-                  <button 
-                    type="button"
-                    onClick={() => toggleParamSection('style')}
-                    className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Palette className="h-4 w-4 text-[#5B4FD8]" />
-                      <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
-                        3. Transformasi Gaya Seni (Satu Pilihan)
-                      </span>
-                    </div>
-                    {openParams.style ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
-                  </button>
-
-                  {openParams.style && (
-                    <div className="px-6 pb-6 border-t border-neutral-50 pt-4 space-y-3">
-                      <p className="text-xs text-[#6B6B6B]">
-                        Alas gaya seni baru di atas parameter gambar asli Anda. Generator akan menggabungkan tekstur ini.
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {PRESET_STYLES.map((style) => {
-                          const isActive = artisticStyle === style.id;
-                          return (
-                            <button
-                              key={style.id}
-                              type="button"
-                              onClick={() => setArtisticStyle(style.id)}
-                              className={`px-3 py-2 rounded-lg text-xs font-medium text-left transition-colors cursor-pointer ${
-                                isActive 
-                                  ? "bg-[#5B4FD8] text-white" 
-                                  : "bg-[#F7F7F5] text-[#111111]/80 hover:bg-[#EBEBEB]"
-                              }`}
-                            >
-                              {style.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 4. CUSTOM NOTES ACCORDION */}
-                <div className="bg-white border border-[#EBEBEB] rounded-2xl overflow-hidden transition-all hover:border-[#CCCCCC]">
-                  <button 
-                    type="button"
-                    onClick={() => toggleParamSection('custom')}
-                    className="w-full px-6 py-4 flex items-center justify-between text-left select-none cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Settings className="h-4 w-4 text-[#5B4FD8]" />
-                      <span className="text-xs font-bold text-[#111111] uppercase tracking-wider">
-                        4. Catatan Atmosfer Tambahan
-                      </span>
-                    </div>
-                    {openParams.custom ? <ChevronUp className="h-4 w-4 text-[#6B6B6B]" /> : <ChevronDown className="h-4 w-4 text-[#6B6B6B]" />}
-                  </button>
-
-                  {openParams.custom && (
-                    <div className="px-6 pb-6 border-t border-neutral-50 pt-4 space-y-1.5">
-                      <p className="text-xs text-[#6B6B6B] mb-2">
-                        Tambahkan instruksi spesifik Anda (misalnya: "ubah latar belakang menjadi kastil abad pertengahan").
-                      </p>
-                      <input
-                        type="text"
-                        value={customInstructions}
-                        onChange={(e) => setCustomInstructions(e.target.value)}
-                        placeholder="Atmospheric modifier atau instruksi tambahan..."
-                        className="w-full bg-[#F7F7F5] border-none rounded-lg px-4 py-3 text-xs text-[#111111] placeholder:text-neutral-400 focus:ring-1 focus:ring-[#5B4FD8]"
-                      />
-                    </div>
-                  )}
-                </div>
-
-              </div>
+              )}
 
               {/* ACTION EXECUTE BUTTON - Big rounded full pill */}
               <button
                 type="button"
-                onClick={handleAnalyzeImage}
+                onClick={activeTab === "prompt" ? handleAnalyzeImage : handleDetectAI}
                 disabled={loading || !selectedImage}
                 className={`w-full py-4 rounded-full font-medium text-sm tracking-wide transition-all select-none cursor-pointer flex items-center justify-center gap-2 ${
                   loading 
@@ -570,7 +698,7 @@ export default function App() {
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4" />
-                    <span>BUAT PROMPT SEKARANG</span>
+                    <span>{activeTab === "prompt" ? "BUAT PROMPT SEKARANG" : "DETEKSI KEASLIAN GAMBAR"}</span>
                   </>
                 )}
               </button>
@@ -606,7 +734,7 @@ export default function App() {
               )}
 
               {/* MAIN PROMPT CODE BLOCK OUTPUT */}
-              {!loading && analysisResult && (
+              {!loading && activeTab === "prompt" && analysisResult && (
                 <div className="space-y-8">
                   
                   {/* GENERATED PROMPT OUTPUT BOX */}
@@ -745,8 +873,118 @@ export default function App() {
                 </div>
               )}
 
+              {/* FORENSICS DETECTION OUTPUT */}
+              {!loading && activeTab === "detector" && detectionResult && (
+                <div className="space-y-6">
+                  
+                  {/* PERSENTASE INDIKATOR */}
+                  <div className="bg-white border border-[#EBEBEB] rounded-2xl p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-mono tracking-wider font-bold text-neutral-400 block uppercase">
+                          Klasifikasi Forensik
+                        </span>
+                        <h4 className="text-lg font-normal text-[#111111] tracking-tight">
+                          {detectionResult.classification}
+                        </h4>
+                      </div>
+                      <div className="text-right">
+                        <span 
+                          className={`text-3xl font-light font-mono ${
+                            detectionResult.percentage < 35 
+                              ? "text-emerald-600" 
+                              : detectionResult.percentage <= 70 
+                                ? "text-amber-500" 
+                                : "text-rose-500"
+                          }`}
+                        >
+                          {detectionResult.percentage}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar Tipis dengan Warna Berubah Dinamis */}
+                    <div className="w-full h-1 bg-neutral-100 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-500 ${
+                          detectionResult.percentage < 35 
+                            ? "bg-emerald-500" 
+                            : detectionResult.percentage <= 70 
+                              ? "bg-amber-500" 
+                              : "bg-rose-500"
+                        }`}
+                        style={{ width: `${detectionResult.percentage}%` }}
+                      />
+                    </div>
+
+                    <p className="text-[10px] text-neutral-400 font-mono leading-relaxed uppercase tracking-wider">
+                      Kemungkinan Jejak Algoritma Rekayasa Generatif
+                    </p>
+                  </div>
+
+                  {/* ANALYSIS & METADATA SECTIONS */}
+                  <div className="bg-white border border-[#EBEBEB] rounded-2xl p-6 space-y-6">
+                    
+                    {/* Analisis Artefak Visual */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#5B4FD8]"></span>
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                          Analisis Artefak Visual
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#111111]/90 leading-relaxed pl-3">
+                        {detectionResult.visualArtifacts}
+                      </p>
+                    </div>
+
+                    {/* Metadata Dugaan */}
+                    <div className="space-y-2 border-t border-neutral-50 pt-5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#5B4FD8]"></span>
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                          Metadata Dugaan & C2PA Manifes
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#111111]/90 leading-relaxed pl-3 font-mono whitespace-pre-wrap bg-[#F7F7F5] p-3 rounded-lg border border-neutral-100 text-[#6B6B6B]">
+                        {detectionResult.metadataDugaan}
+                      </p>
+                    </div>
+
+                    {/* Saran Verifikasi Tambahan */}
+                    <div className="space-y-2 border-t border-neutral-50 pt-5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#5B4FD8]"></span>
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                          Saran Verifikasi Tambahan
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#111111]/90 leading-relaxed pl-3">
+                        {detectionResult.saranVerifikasi}
+                      </p>
+                    </div>
+
+                  </div>
+
+                </div>
+              )}
+
               {/* UNANALYSED LANDING SCREEN WITH TIPS */}
-              {!loading && !analysisResult && (
+              {!loading && activeTab === "prompt" && !analysisResult && (
+                <div className="bg-white border border-[#EBEBEB] rounded-2xl p-8 text-center min-h-[440px] flex flex-col justify-center items-center">
+                  <div className="h-10 w-10 bg-[#F7F7F5] rounded-full flex items-center justify-center text-[#6B6B6B] mb-4">
+                    <Sliders className="h-4 w-4" />
+                  </div>
+                  <h4 className="text-sm font-medium uppercase tracking-wider text-[#111111] mb-2 leading-none">
+                    Kabin Hasil Masih Kosong
+                  </h4>
+                  <p className="text-xs text-[#6B6B6B] max-w-xs mx-auto leading-relaxed">
+                    Unggah rancangan visual Anda di panel kiri atau ketuk salah satu gambar contoh di galeri uji coba instan di bawah ini.
+                  </p>
+                </div>
+              )}
+
+              {!loading && activeTab === "detector" && !detectionResult && (
                 <div className="bg-white border border-[#EBEBEB] rounded-2xl p-8 text-center min-h-[440px] flex flex-col justify-center items-center">
                   <div className="h-10 w-10 bg-[#F7F7F5] rounded-full flex items-center justify-center text-[#6B6B6B] mb-4">
                     <Sliders className="h-4 w-4" />
@@ -755,7 +993,7 @@ export default function App() {
                     Kabin Deteksi Masih Kosong
                   </h4>
                   <p className="text-xs text-[#6B6B6B] max-w-xs mx-auto leading-relaxed">
-                    Unggah rancangan visual Anda di panel kiri atau ketuk salah satu gambar contoh di galeri galon uji coba instan di bawah ini.
+                    Silakan unggah gambar di sebelah kiri lalu ketuk tombol "DETEKSI KEASLIAN GAMBAR" untuk memulai pencocokan sidik jari digital forensics.
                   </p>
                 </div>
               )}
@@ -777,7 +1015,7 @@ export default function App() {
               Galeri Uji Coba Instan
             </h3>
             <p className="text-xs text-[#6B6B6B]">
-              Klik salah satu gambar artistik di bawah untuk langsung menguji kepiawaian analisis dekonstruksi prompt engine Nano Banana.
+              Klik pada salah satu citra di bawah untuk langsung menguji kepiawaian dekonstruksi prompt artistik maupun analisis forensik autentisitas AI generatif.
             </p>
           </div>
 
@@ -830,7 +1068,7 @@ export default function App() {
           </div>
 
           <p className="text-[10px] text-[#6B6B6B]/80 font-mono">
-            Unveiling high-end visual prompts &bull; Armed with Gemini
+            Unveiling high-end visual prompts & AI authenticity index &bull; Armed with Gemini 3
           </p>
 
           <a 

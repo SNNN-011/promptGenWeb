@@ -1,4 +1,4 @@
-import { ImageAnalysisResponse } from "./types";
+import { ImageAnalysisResponse, ImageDetectionResponse } from "./types";
 
 export interface SampleImage {
   id: string;
@@ -7,6 +7,7 @@ export interface SampleImage {
   imageUrl: string;
   originalStyle: string;
   precalculatedResponse: ImageAnalysisResponse;
+  precalculatedDetection: ImageDetectionResponse;
 }
 
 export const PRESET_MODELS = [
@@ -65,6 +66,13 @@ export const SAMPLE_IMAGES: SampleImage[] = [
       colors: "Warna kontras tinggi antara kelamnya luar akasa dengan jingga kosmik yang membara dan biru elektrik bumi, menciptakan kontras visual pelengkap (complementary contrast) yang kuat.",
       promptUniversal: "A cinematic medium-shot photo of an astronaut in an intricate white spacesuit. The gold-tinted glass of their helmet visor clearly reflects Planet Earth and glowing orange stellar nebulae. Intense side lighting from cosmic stars with electric blue and rich orange glows. Epic deep space atmosphere, highly detailed textures, photorealistic masterpiece, widescreen aspect-ratio --ar 16:9",
       additionalTips: "Gunakan pengubah warna oranye dan biru untuk memaksimalkan efek sci-fi futuristik. Pada Nano Banana, pastikan menggunakan rasio lebar agar kemegahan luar angkasa lebih membentang epik."
+    },
+    precalculatedDetection: {
+      percentage: 85,
+      classification: "Sintetis / Hasil Generate AI (Kemungkinan Tinggi)",
+      visualArtifacts: "Saturasi warna ganda pada baju luar angun memancarkan pendaran cahaya yang terlalu seragam secara digital. Refleksi kelengkungan visor helm astronot menunjukkan pembiasan cahaya sferis yang sangat sempurna tanpa adanya defleksi lensa optik fisik, dengan kerapatan pixel yang sangat kontras.",
+      metadataDugaan: "Pemeriksaan buffer biner mendeteksi ketiadaan EXIF metadata standar manufaktur perangkat kamera (seperti Canon, Sony, Nikon). Tidak terdeteksi tanda tangan digital C2PA JUMBF pada container file. Terbaca sisa struktur kompresi penanda web-generator AI.",
+      saranVerifikasi: "Lakukan pengujian pencarian gambar terbalik (Google Image Search) untuk menemukan varian aslinya pada bursa prompt Midjourney. Gunakan teknik Error Level Analysis (ELA) untuk melokalisasi perbedaan kompresi warna pada area helm dan nebula."
     }
   },
   {
@@ -81,6 +89,13 @@ export const SAMPLE_IMAGES: SampleImage[] = [
       colors: "Palet warna yang menenangkan, dipenuhi oleh spektrum hijau lumut, cokelat kayu pinus tua, kelabu batu alam, serta sentuhan kuning keemasan tipis dari sinar mentari pagi.",
       promptUniversal: "An enchanting ethereal watercolor illustration of a whimsical wooden cottage nestled inside a foggy pine forest. A stone pathway leads to the arched wooden door. Light mist rises from the vibrant green ferns. Golden morning sunbeams filter through the towering trees, creating a warm magical glow, fairytale book aesthetic, soft watercolor splashes --ar 4:3",
       additionalTips: "Bila mengunggah ke Stable Diffusion, cobalah tambah tag 'fine paper texture' untuk memberi kesan bahwa gambar benar-benar dilukis di atas kertas watercolor berserat."
+    },
+    precalculatedDetection: {
+      percentage: 98,
+      classification: "Sintetis / Hasil Generate AI (Hampir Pasti)",
+      visualArtifacts: "Paling mencolok pada pembagian serat kabut tipis di antara pohon pinus rimbun yang memiliki lekukan sangat fraktal khas model difusi stabil. Sapuan cat air halus bercampur lunak melampaui batas tepi goresan siluet pondok, yang secara fisik sulit dilakukan seniman manual tanpa menimbulkan penumpukan pigmen (pigment pooling).",
+      metadataDugaan: "JUMBF C2PA Content Credentials kosong sepenuhnya, menunjukkan gambar ini dirakit langsung pada sistem komputasi cloud tanpa keterlibatan sensor kamera. Metadata software tidak merujuk pada Adobe Photoshop asli.",
+      saranVerifikasi: "Amati bagian sudut atap pondok kayu di mana garis-garis lumut bersinggungan. Pada gambar AI, garis pemisah biasanya mencair secara tidak rasional satu sama lain. Bandingkan dengan database pola lukisan fantasi draf Midjourney."
     }
   },
   {
@@ -97,6 +112,13 @@ export const SAMPLE_IMAGES: SampleImage[] = [
       colors: "Warna yang sangat jenuh (highly saturated colors) dengan spektrum utama biru neon, ungu violet, merah menyala, dan kegelapan hitam aspal basah.",
       promptUniversal: "A low-angle wide photo of a narrow futuristic alley in Neo-Tokyo during rainy night. The wet asphalt beautifully reflects the glowing neon signs of hot pink, magenta, and electric blue. Towering skyscrapers with huge glowing hologram advertisements fill the sky, high contrast atmospheric lighting, cybernetic details --ar 16:9",
       additionalTips: "Kata kunci seperti 'wet reflecting asphalt' atau 'neon reflections' sangat krusial di sini agar algoritma AI membuat kilau air hujan pada jalanan tampak sangat nyata."
+    },
+    precalculatedDetection: {
+      percentage: 75,
+      classification: "Sintetis / Hasil Generate AI (Kemungkinan Tinggi)",
+      visualArtifacts: "Terjadi distorsi karakter kanji pada papan reklame vertikal sebelah kanan, di mana goresannya tidak membentuk aksara Jepang asli melainkan sekadar coretan mirip glif (pseudo-text). Pantulan pendar neon merah muda dan cyan pada permukaan air aspal basah terlalu tajam sempurna secara fraktal.",
+      metadataDugaan: "Ketiadaan total tag kamera EXIF (seperti ISO, f-stop, focal length, GPS lokasi Tokyo). Deteksi sisa byte data kompresi mengarah pada penanda upscaler atau generator difusi.",
+      saranVerifikasi: "Perhatikan jumbai kabel listrik yang bergelantungan; pada foto asli, kabel mengalami kelengkungan gravitasi (physics catenary), sementara pada AI beberapa ujung kabel tampak melayang atau menyatu ke dinding tanpa pengait rasional."
     }
   },
   {
@@ -113,6 +135,14 @@ export const SAMPLE_IMAGES: SampleImage[] = [
       colors: "Warna marmer putih pualam natural dibalut gradien warna neon ungu, merah muda bercahaya, dan biru toska di tengah kegelapan pekat latar belakang abu-abu arang.",
       promptUniversal: "A high-fashion museum portrait of an ancient Greek white marble statue head. Abstract glowing neon glass helix in bright magenta and cyan wraps around the eyes and face of the bust. Dark moody gallery studio background, dramatic chiaroscuro high-contrast lighting, vaporwave neo-art aesthetic --ar 3:4",
       additionalTips: "Bila ingin nuansa retro yang lebih kental, padukan prompt ini dengan tag 'Vaporwave aesthetic' atau 'synthwave palette'."
+    },
+    precalculatedDetection: {
+      percentage: 92,
+      classification: "Sintetis / Hasil Generate AI (Hampir Pasti)",
+      visualArtifacts: "Cahaya neon LED berwarna fuchsia yang memotong wajah patung tidak menimbulkan pembiasan cahaya pendar (light bleed) yang tepat pada pori-pori marmer bagian dalam. Sudut bayangan patung di dahi bertentangan dengan titik asal pancaran neon, mengindikasikan inkonsistensi rendering radiansi fisis.",
+      metadataDugaan: "Tidak terdeteksi penanda autentisitas C2PA maupun tanda air digital SynthID. Container file menunjukkan pengodean ulang tanpa ada penanda riwayat ekspor kamera fisik.",
+      saranVerifikasi: "Analisis dengan pemisahan saluran filter RGB; Anda akan melihat transisi gradasi antara warna neon yang super-jenuh dengan warna marmer putih yang tidak memiliki chromatic aberration khas lensa fisik."
     }
   }
 ];
+

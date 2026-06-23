@@ -1,6 +1,6 @@
 {
-  "name": "Image to Prompt Generator",
-  "description": "Analisis foto atau gambar untuk membuat prompt berkualitas tinggi guna menghasilkan gambar serupa menggunakan DALL-E, Midjourney, dan Stable Diffusion.",
+  "name": "NanoPrompt - Generator Prompt & Detektor AI",
+  "description": "Platform rekayasa instan & analisis forensik citra: Ekstrak visual menjadi prompt artistik presisi, dan analisis keaslian gambar untuk mendeteksi rekayasa generatif AI.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
