@@ -1,12 +1,43 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenAI, Type } from "@google/genai";
-import { validateFetchUrl, safeFetch } from "../utils/security";
-import { sanitizeError } from "../utils/errors";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-  httpOptions: { headers: { "User-Agent": "aistudio-build" } },
-});
+// ---- SSRF Guard ----
+function isPrivateIp(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (h === "localhost" || h === "[::1]" || h === "0.0.0.0") return true;
+  const PRIVATE_PREFIXES = [
+    "127.", "10.", "0.", "169.254.", "192.168.",
+    "172.16.", "172.17.", "172.18.", "172.19.",
+    "172.20.", "172.21.", "172.22.", "172.23.",
+    "172.24.", "172.25.", "172.26.", "172.27.",
+    "172.28.", "172.29.", "172.30.", "172.31.",
+  ];
+  for (const prefix of PRIVATE_PREFIXES) {
+    if (h.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
+async function validateFetchUrl(raw: string): Promise<URL> {
+  let url: URL;
+  try { url = new URL(raw); } catch { throw new Error("URL tidak valid."); }
+  if (!["http:", "https:"].includes(url.protocol)) throw new Error("Protokol URL tidak didukung.");
+  if (url.href.length > 2048) throw new Error("URL terlalu panjang.");
+  if (isPrivateIp(url.hostname)) throw new Error("URL mengarah ke jaringan internal.");
+  return url;
+}
+
+async function safeFetch(url: URL): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  try {
+    return await fetch(url.href, {
+      signal: controller.signal,
+      redirect: "error",
+      headers: { "User-Agent": "image-to-prompt-bot" },
+    });
+  } finally { clearTimeout(timer); }
+}
 
 async function getImageBase64(imageInput: string): Promise<string> {
   if (imageInput.startsWith("http://") || imageInput.startsWith("https://")) {
@@ -31,6 +62,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "Silakan unggah gambar." });
     }
 
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "API key not configured." });
+    }
+
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { headers: { "User-Agent": "aistudio-build" } } });
     const base64Data = await getImageBase64(image);
     const imagePart = { inlineData: { data: base64Data, mimeType } };
 
@@ -84,6 +121,13 @@ Output: JSON dengan percentage (0-100), classification, visualArtifacts, metadat
 
   } catch (error: any) {
     console.error("Detection Error:", error);
-    return res.status(500).json({ error: sanitizeError(error) });
+    const msg = error?.code === "ECONNREFUSED" || error?.code === "ENOTFOUND"
+      ? "Layanan sedang tidak tersedia."
+      : error?.name === "AbortError"
+        ? "Permintaan timeout."
+        : error?.status === 429
+          ? "Terlalu banyak permintaan."
+          : "Terjadi kesalahan internal.";
+    return res.status(500).json({ error: msg });
   }
 }

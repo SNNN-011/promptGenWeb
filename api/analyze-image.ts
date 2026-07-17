@@ -1,14 +1,92 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+
+// Inline security utilities to avoid import resolution issues
 import { GoogleGenAI, Type } from "@google/genai";
-import { sanitizePreferences } from "../utils/sanitize";
-import { validateFetchUrl, safeFetch } from "../utils/security";
-import { sanitizeError } from "../utils/errors";
+import { isIP } from "net";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-  httpOptions: { headers: { "User-Agent": "aistudio-build" } },
-});
+// ---- SSRF Guard ----
+function isPrivateIp(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (h === "localhost" || h === "[::1]" || h === "0.0.0.0") return true;
+  const PRIVATE_PREFIXES = [
+    "127.", "10.", "0.", "169.254.", "192.168.",
+    "172.16.", "172.17.", "172.18.", "172.19.",
+    "172.20.", "172.21.", "172.22.", "172.23.",
+    "172.24.", "172.25.", "172.26.", "172.27.",
+    "172.28.", "172.29.", "172.30.", "172.31.",
+  ];
+  for (const prefix of PRIVATE_PREFIXES) {
+    if (h.startsWith(prefix)) return true;
+  }
+  return false;
+}
 
+async function validateFetchUrl(raw: string): Promise<URL> {
+  let url: URL;
+  try { url = new URL(raw); } catch { throw new Error("URL tidak valid."); }
+  if (!["http:", "https:"].includes(url.protocol)) throw new Error("Protokol URL tidak didukung.");
+  if (url.href.length > 2048) throw new Error("URL terlalu panjang.");
+  if (isPrivateIp(url.hostname)) throw new Error("URL mengarah ke jaringan internal.");
+  return url;
+}
+
+async function safeFetch(url: URL): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  try {
+    return await fetch(url.href, {
+      signal: controller.signal,
+      redirect: "error",
+      headers: { "User-Agent": "image-to-prompt-bot" },
+    });
+  } finally { clearTimeout(timer); }
+}
+
+// ---- Input Sanitization ----
+const ALLOWED_GENERATORS = ["midjourney", "dalle", "stable-diffusion", "nano-banana", "flux", "ideogram"];
+const ALLOWED_ASPECTS = ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "21:9"];
+const ALLOWED_DETAIL = ["compact", "balanced", "detailed"];
+const ALLOWED_STYLES = [
+  "keep-original", "cyberpunk", "classic-oil-painting", "retro-anime",
+  "cinematic-drama", "watercolor", "pixel-art", "minimalist", "surrealism",
+  "pop-art", "impressionism", "gothic", "vaporwave", "synthwave",
+];
+
+function stripPromptInjection(text: string): string {
+  return text
+    .replace(/\n/g, " ")
+    .replace(/[<>{}]/g, "")
+    .replace(/ignore.*previous/gi, "")
+    .replace(/system.*prompt/gi, "")
+    .replace(/you are now/gi, "")
+    .replace(/forget.*instructions/gi, "")
+    .replace(/override.*system/gi, "")
+    .replace(/\{\{.*?\}\}/g, "")
+    .trim();
+}
+
+function validateEnum(value: string, allowed: string[], fallback: string): string {
+  const v = value?.toLowerCase().trim();
+  return allowed.includes(v) ? v : fallback;
+}
+
+function sanitizePreferences(prefs: any): any {
+  if (!prefs) return null;
+  return {
+    generator: validateEnum(prefs.generator, ALLOWED_GENERATORS, "nano-banana"),
+    aspectRatio: validateEnum(prefs.aspectRatio, ALLOWED_ASPECTS, "1:1"),
+    artisticStyle: validateEnum(prefs.artisticStyle, ALLOWED_STYLES, "keep-original"),
+    detailLevel: validateEnum(prefs.detailLevel, ALLOWED_DETAIL, "balanced"),
+    customInstructions: prefs.customInstructions ? stripPromptInjection(prefs.customInstructions).slice(0, 500) : "",
+    aspectToExtract: Array.isArray(prefs.aspectToExtract)
+      ? prefs.aspectToExtract.filter((a: string) =>
+          ["semua", "warna", "subjek", "gaya", "komposisi", "pencahayaan"].includes(a)
+        )
+      : ["semua"],
+  };
+}
+
+// ---- Image Processing ----
 async function getImageBase64(imageInput: string): Promise<string> {
   if (imageInput.startsWith("http://") || imageInput.startsWith("https://")) {
     const url = await validateFetchUrl(imageInput);
@@ -20,6 +98,7 @@ async function getImageBase64(imageInput: string): Promise<string> {
   return imageInput.replace(/^data:image\/\w+;base64,/, "");
 }
 
+// ---- Handler ----
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -32,41 +111,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "Silakan unggah gambar terlebih dahulu." });
     }
 
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "API key not configured." });
+    }
+
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { headers: { "User-Agent": "aistudio-build" } } });
     const safePreferences = sanitizePreferences(preferences);
     const base64Data = await getImageBase64(image);
     const imagePart = { inlineData: { data: base64Data, mimeType } };
 
-    // Build prompt text (same logic as server.ts)
     let prefsText = "";
     if (safePreferences) {
-      prefsText = `
-The user has specified the following customization preferences for the prompt generation:
+      prefsText = `The user has specified the following customization preferences:
 - Desired Generator: ${safePreferences.generator}
 - Desired Aspect Ratio: ${safePreferences.aspectRatio}
 - Artistic Vibe or Style: ${safePreferences.artisticStyle}
 - Prompt Length/Detail Level: ${safePreferences.detailLevel}
-- Custom Request Notes: ${safePreferences.customInstructions ? `"${safePreferences.customInstructions}"` : "None"}
-`;
+- Custom Request Notes: ${safePreferences.customInstructions ? `"${safePreferences.customInstructions}"` : "None"}`;
     }
 
     const aspectToExtract = safePreferences?.aspectToExtract || ["semua"];
-    let aspectFocusText = "";
-    let promptUniversalConstraint = "";
+    let aspectFocusText = "FOKUS ANALISIS UTAMA: **Seluruh Pembentuk Gambar (General Comprehensive Analysis)**.";
+    let promptUniversalConstraint = "Prompt wajib hiper-deskriptif dengan sentuhan estetis, pencahayaan sinematis, parameter kamera, dan warna dominan.";
 
-    if (aspectToExtract.includes("semua") || aspectToExtract.length === 0) {
-      aspectFocusText = `FOKUS ANALISIS: **Seluruh Pembentuk Gambar**.`;
-      promptUniversalConstraint = "Prompt wajib hiper-deskriptif dengan sentuhan estetis, pencahayaan sinematis, parameter kamera, dan warna dominan.";
-    } else {
-      aspectFocusText = "FOKUS ANALISIS PADA:\n";
-      if (aspectToExtract.includes("warna")) aspectFocusText += "- Color Grading\n";
-      if (aspectToExtract.includes("subjek")) aspectFocusText += "- Subjek & Pose\n";
-      if (aspectToExtract.includes("gaya")) aspectFocusText += "- Gaya Seni\n";
-      if (aspectToExtract.includes("komposisi")) aspectFocusText += "- Komposisi Kamera\n";
-      if (aspectToExtract.includes("pencahayaan")) aspectFocusText += "- Pencahayaan\n";
+    if (aspectToExtract.length > 0 && !aspectToExtract.includes("semua")) {
+      aspectFocusText = "FOKUS ANALISIS PADA:\n" +
+        aspectToExtract.map((a: string) => {
+          const m: Record<string, string> = { warna: "- Color Grading", subjek: "- Subjek & Pose", gaya: "- Gaya Seni", komposisi: "- Komposisi Kamera", pencahayaan: "- Pencahayaan" };
+          return m[a] || "";
+        }).filter(Boolean).join("\n");
       promptUniversalConstraint = "Gunakan HANYA elemen yang dipilih.";
     }
 
-    const promptText = `Anda adalah pakar prompt engineering untuk AI generator.
+    const promptText = `Anda adalah pakar prompt engineering untuk AI generator gambar.
 ${aspectFocusText}
 ${prefsText}
 ${promptUniversalConstraint}
@@ -101,6 +179,13 @@ Output: promptUniversal dalam Bahasa Inggris + '--ar ${safePreferences?.aspectRa
 
   } catch (error: any) {
     console.error("Analysis Error:", error);
-    return res.status(500).json({ error: sanitizeError(error) });
+    const msg = error?.code === "ECONNREFUSED" || error?.code === "ENOTFOUND"
+      ? "Layanan sedang tidak tersedia."
+      : error?.name === "AbortError"
+        ? "Permintaan timeout."
+        : error?.status === 429
+          ? "Terlalu banyak permintaan."
+          : "Terjadi kesalahan internal.";
+    return res.status(500).json({ error: msg });
   }
 }
