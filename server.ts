@@ -3,6 +3,9 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import { validateFetchUrl, safeFetch } from "./utils/security";
+import { sanitizePreferences } from "./utils/sanitize";
+import { sanitizeError } from "./utils/errors";
 
 dotenv.config();
 
@@ -41,9 +44,10 @@ app.get("/api/health", (req, res) => {
 // API endpoint for image-to-prompt analysis
 async function getImageBase64(imageInput: string): Promise<string> {
   if (imageInput.startsWith("http://") || imageInput.startsWith("https://")) {
-    const res = await fetch(imageInput);
+    const url = await validateFetchUrl(imageInput); // SSRF protection
+    const res = await safeFetch(url);
     if (!res.ok) {
-      throw new Error(`Gagal mengunduh gambar contoh dari bursa URL: ${imageInput}`);
+      throw new Error("Gagal mengunduh gambar.");
     }
     const arrayBuffer = await res.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -62,6 +66,7 @@ app.post("/api/analyze-image", async (req, res) => {
     }
 
     const ai = getGeminiClient();
+    const safePreferences = sanitizePreferences(preferences); // Prompt injection protection
 
     // Fetch or convert to base64
     const base64Data = await getImageBase64(image);
@@ -74,19 +79,19 @@ app.post("/api/analyze-image", async (req, res) => {
 
     // Construct preference tuning rules
     let prefsText = "";
-    if (preferences) {
+    if (safePreferences) {
       prefsText = `
 The user has specified the following customization preferences for the prompt generation, please adapt the generated prompts to incorporate these styling preferences:
-- Desired Generator: ${preferences.generator} (Focus prompts for this model specifically, while keeping others valid too)
-- Desired Aspect Ratio: ${preferences.aspectRatio} (Include appropriate aspect ratio parameters, e.g. '--ar ${preferences.aspectRatio}' for Midjourney prompts)
-- Artistic Vibe or Style Style: ${preferences.artisticStyle} (E.g. "Keep original", "Cyberpunk", "Classic Oil Painting", "Retro Anime", "Cinematic Drama", etc.)
-- Prompt Length/Detail Level: ${preferences.detailLevel} (compact, balanced, or highly-detailed)
-- Custom Request Notes: ${preferences.customInstructions ? `"${preferences.customInstructions}"` : "None"}
+- Desired Generator: ${safePreferences.generator} (Focus prompts for this model specifically, while keeping others valid too)
+- Desired Aspect Ratio: ${safePreferences.aspectRatio} (Include appropriate aspect ratio parameters, e.g. '--ar ${safePreferences.aspectRatio}' for Midjourney prompts)
+- Artistic Vibe or Style Style: ${safePreferences.artisticStyle} (E.g. "Keep original", "Cyberpunk", "Classic Oil Painting", "Retro Anime", "Cinematic Drama", etc.)
+- Prompt Length/Detail Level: ${safePreferences.detailLevel} (compact, balanced, or highly-detailed)
+- Custom Request Notes: ${safePreferences.customInstructions ? `"${safePreferences.customInstructions}"` : "None"}
 `;
     }
 
     let aspectFocusText = "";
-    const aspectToExtract = preferences?.aspectToExtract || ["semua"];
+    const aspectToExtract = safePreferences?.aspectToExtract || ["semua"];
     let promptUniversalConstraint = "";
 
     if (aspectToExtract.includes("semua") || aspectToExtract.length === 0) {
@@ -340,7 +345,7 @@ PENTING: Seluruh tanggapan WAJIB ditulis dalam Bahasa Indonesia yang profesional
 
   } catch (error: any) {
     console.error("Detection Error Details:", error);
-    return res.status(500).json({ error: error.message || "Gagal melakukan deteksi keaslian gambar." });
+    return res.status(500).json({ error: sanitizeError(error) });
   }
 });
 

@@ -3,18 +3,20 @@ import { Type } from "@google/genai";
 import { AnalysisRequest, AnalysisResponse } from "../types";
 import { getGeminiClient, constructPrompt } from "../services/geminiService";
 import logger from "../utils/logger";
+import { validateFetchUrl, safeFetch } from "../utils/security";
+import { sanitizeError } from "../utils/errors";
 
 const router = express.Router();
 
 async function getImageBase64(imageInput: string): Promise<string> {
   if (imageInput.startsWith("http://") || imageInput.startsWith("https://")) {
     try {
-      const res = await fetch(imageInput);
+      const url = await validateFetchUrl(imageInput); // SSRF protection
+      const res = await safeFetch(url);
       if (!res.ok) {
-        throw new Error(`Gagal mengunduh gambar dari URL: ${imageInput}`);
+        throw new Error("Gagal mengunduh gambar.");
       }
       
-      // Validasi ukuran file (misal max 5MB)
       const contentLength = res.headers.get("content-length");
       if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
         throw new Error("Ukuran gambar terlalu besar (max 5MB).");
@@ -23,7 +25,7 @@ async function getImageBase64(imageInput: string): Promise<string> {
       const arrayBuffer = await res.arrayBuffer();
       return Buffer.from(arrayBuffer).toString("base64");
     } catch (err: any) {
-      throw new Error(`Gagal memproses gambar dari URL: ${err.message}`);
+      throw new Error("Gagal memproses gambar dari URL.");
     }
   }
   return imageInput.replace(/^data:image\/\w+;base64,/, "");
@@ -75,7 +77,7 @@ router.post("/analyze-image", async (req: express.Request<{}, {}, AnalysisReques
 
   } catch (error: any) {
     logger.error("Analysis Error:", { error: error.message });
-    return res.status(500).json({ error: error.message || "Gagal mengurai gambar." });
+    return res.status(500).json({ error: sanitizeError(error) });
   }
 });
 

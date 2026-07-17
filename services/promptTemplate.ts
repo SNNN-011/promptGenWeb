@@ -1,4 +1,7 @@
-export function getPromptTemplate(preferences: any): string {
+import { sanitizePreferences } from "../utils/sanitize";
+
+export function getPromptTemplate(rawPreferences: any): string {
+  const preferences = sanitizePreferences(rawPreferences);
   const prefsText = preferences
     ? `
 The user has specified the following customization preferences:
